@@ -1,12 +1,13 @@
 # config.py
 # All configurable constants and settings
 
-WIDTH = 800
-HEIGHT = 600
+# Increased by 25% (from 800×600 to 1000×750).
+WIDTH = 1000
+HEIGHT = 750
 FPS = 60
 
 # Movement & Physics Settings:
-ACCELERATION = 2.5       # Force multiplier applied when moving via AWSD.
+ACCELERATION = 7.5       # Force multiplier applied when moving via mouse.
 FRICTION = 0.9           # Damping factor applied each frame.
 MIN_THRUST = 100         # Minimum effective distance for maximum thrust (not used in keyboard control).
 

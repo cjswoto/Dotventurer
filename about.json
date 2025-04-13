@@ -1,0 +1,106 @@
+{
+  "panel_background_color": [20, 20, 20],
+  "title": "About",
+  "objects": [
+    {
+      "shape": "octagon",
+      "color": [255,200,50],
+      "size": 12,
+      "name": "Player",
+      "description": "Move with mouse, left-click to thrust"
+    },
+    {
+      "shape": "irregular",
+      "sides": 8,
+      "variation": 0.4,
+      "color": [150,100,100],
+      "size": 15,
+      "name": "Obstacle",
+      "description": "Avoid them"
+    },
+    {
+      "shape": "star",
+      "spikes": 5,
+      "inner_factor": 0.5,
+      "color": [100,200,100],
+      "size": 15,
+      "name": "Chaser",
+      "description": "Tracks you down (rotates)"
+    },
+    {
+      "shape": "irregular",
+      "sides": 7,
+      "variation": 0.3,
+      "color": [100,100,200],
+      "size": 15,
+      "name": "Splitter",
+      "description": "Splits on death"
+    },
+    {
+      "shape": "diamond",
+      "color": [0,255,0],
+      "size": 12,
+      "name": "Extra Fuel",
+      "description": "Grants 10-sec immunity"
+    },
+    {
+      "shape": "diamond",
+      "color": [255,215,0],
+      "size": 12,
+      "name": "Score Boost",
+      "description": "Gold pickup"
+    },
+    {
+      "shape": "triangle",
+      "color": [255,105,180],
+      "size": 12,
+      "name": "Boost",
+      "description": "Tail doubled 10 sec & +10% score"
+    },
+    {
+      "shape": "star",
+      "spikes": 8,
+      "inner_factor": 0.75,
+      "color": [128,0,128],
+      "size": 15,
+      "name": "Special",
+      "description": "Right-click to wipe enemies"
+    },
+    {
+      "shape": "rectangle",
+      "color": [0,191,255],
+      "size": 12,
+      "name": "Shield",
+      "description": "10-sec protective shield"
+    },
+    {
+      "shape": "ellipse",
+      "color": [138,43,226],
+      "size": 12,
+      "name": "Slow-Motion",
+      "description": "Enemies slow for 10 sec"
+    },
+    {
+      "shape": "pentagon",
+      "color": [255,165,0],
+      "size": 12,
+      "name": "Score Multiplier",
+      "description": "Double score for 10 sec"
+    },
+    {
+      "shape": "hexagon",
+      "color": [255,20,147],
+      "size": 12,
+      "name": "Magnet",
+      "description": "Attract pickups for 10 sec"
+    }
+  ],
+  "instructions": [
+    "Controls:",
+    "  - Move mouse to guide player",
+    "  - Left-click: Thrust (uses fuel)",
+    "  - Right-click: Activate special",
+    "",
+    "Objective: Survive, collect powerups, and score as high as possible!"
+  ]
+}
