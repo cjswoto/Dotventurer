@@ -1,7 +1,5 @@
 # entities.py
 
-# re‑export everything, including the newly added PowerUp
-
 from entities_utils import (
     regular_polygon,
     star_polygon,
@@ -23,7 +21,7 @@ from entities_emitter import Emitter
 
 from entities_pickups import (
     PowerUp,
-    ExtraFuelPickup,
+    ImmunityPickup,            # ← renamed
     ScoreBoostPickup,
     BoostPickup,
     SpecialPickup,

@@ -20,7 +20,6 @@ def _glow(surface, centre, radius, color, ticks):
     pulse = 2 + abs(math.sin(ticks * 0.005)) * 4       # 2‑6 px extra
     glow_r = int(radius + pulse)
     glow_color = (*color, 60)                          # low alpha
-    # pygame doesn’t support per‑primitive alpha; use a temp surface
     temp = pygame.Surface((glow_r*2, glow_r*2), pygame.SRCALPHA)
     pygame.draw.circle(temp, glow_color, (glow_r, glow_r), glow_r)
     surface.blit(temp, (centre[0]-glow_r, centre[1]-glow_r))
@@ -42,7 +41,7 @@ class PowerUp:
 # ------------------------------------------------------------
 # Timed pickups (all now 30 s instead of 10 s)
 # ------------------------------------------------------------
-class ExtraFuelPickup:
+class ImmunityPickup:                     # ← renamed
     def __init__(self):
         self.pos, self.radius, self.color = _pos(), 12, (0,255,0)
         self.effect, self.duration = "immunity", 30
@@ -99,8 +98,7 @@ class MagnetPickup:
         pygame.draw.polygon(surf, self.color, pts)
 
 # ------------------------------------------------------------
-# ScoreBoostPickup (instant score) and SpecialPickup (special)
-# keep their original behaviour but get the glow for consistency
+# Instant‑score and special pickups (unchanged)
 # ------------------------------------------------------------
 class ScoreBoostPickup:
     def __init__(self):
