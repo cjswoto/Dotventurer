@@ -1,7 +1,9 @@
 # managers.py
-import time, random, math
+
+import random
+import math
 import pygame
-from config import WIDTH, WORLD_WIDTH, WORLD_HEIGHT
+import time
 
 class Timer:
     def __init__(self, duration):
@@ -25,7 +27,6 @@ class LevelManager:
 
 class Explosion:
     def __init__(self, pos):
-        # Local import to avoid circular dependency
         from entities import Particle
         self.particles = [Particle(pos) for _ in range(30)]
         self.done = False
@@ -47,37 +48,10 @@ class ExplosionManager:
     def update(self, dt):
         for exp in self.explosions:
             exp.update(dt)
-        self.explosions = [exp for exp in self.explosions if not exp.done]
+        self.explosions = [e for e in self.explosions if not e.done]
     def draw(self, surf):
         for exp in self.explosions:
             exp.draw(surf)
-
-class Emitter:
-    """This Emitter can be used by enemies or the player for particle effects."""
-    def __init__(self, pos):
-        # Instead of importing Particle at the module level, we will import it later when needed.
-        self.pos = pygame.math.Vector2(pos)
-        self.particles = []
-        self.rate = 30
-        self.accumulator = 0
-        self.max_particles = 100
-
-    def update(self, dt, emitting=True, cone_direction=None):
-        if emitting:
-            self.accumulator += dt * self.rate
-            while self.accumulator > 1:
-                # Local import of Particle to avoid circular dependency
-                from entities import Particle
-                if len(self.particles) < self.max_particles:
-                    self.particles.append(Particle(self.pos))
-                self.accumulator -= 1
-        for p in self.particles:
-            p.update(dt)
-        self.particles = [p for p in self.particles if p.life > 0]
-
-    def draw(self, surf):
-        for p in self.particles:
-            p.draw(surf)
 
 class Camera:
     def __init__(self):

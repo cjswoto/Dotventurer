@@ -1,7 +1,8 @@
 # ui.py
+
 import pygame
 import os
-from config import WIDTH, HEIGHT
+from config import WIDTH
 
 class Button:
     def __init__(self, rect, text, font_size):
@@ -10,14 +11,16 @@ class Button:
         self.font = pygame.font.SysFont("Arial", font_size)
 
     def draw(self, surf):
-        pygame.draw.rect(surf, (100,100,100), self.rect)
-        txt = self.font.render(self.text, True, (255,255,255))
-        surf.blit(txt, (self.rect.centerx - txt.get_width()/2,
-                        self.rect.centery - txt.get_height()/2))
+        pygame.draw.rect(surf, (100, 100, 100), self.rect)
+        txt = self.font.render(self.text, True, (255, 255, 255))
+        surf.blit(
+            txt,
+            (self.rect.centerx - txt.get_width()/2,
+             self.rect.centery - txt.get_height()/2)
+        )
 
     def is_hovered(self, pos):
         return self.rect.collidepoint(pos)
-
 
 class Leaderboard:
     def __init__(self, filename="scores.txt"):
@@ -48,8 +51,8 @@ class Leaderboard:
         font = pygame.font.SysFont("Arial", 30)
         y = 100
         title = font.render("Leaderboard", True, (255,255,255))
-        surf.blit(title, (WIDTH/2 - title.get_width()/2, 50))
+        surf.blit(title, (WIDTH//2 - title.get_width()//2, 50))
         for s in self.scores:
             txt = font.render(f"{s:.0f}", True, (255,255,255))
-            surf.blit(txt, (WIDTH/2 - txt.get_width()/2, y))
+            surf.blit(txt, (WIDTH//2 - txt.get_width()//2, y))
             y += 40
