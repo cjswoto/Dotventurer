@@ -2,16 +2,16 @@
 # All configurable constants and settings
 
 # Window dimensions (increased 25%: 800×600 → 1000×750)
-WIDTH = 1000
-HEIGHT = 750
+WIDTH = 1920
+HEIGHT = 1080
 
 # Frames per second
 FPS = 60
 
 # Movement & Physics Settings
-ACCELERATION = 300.0       # Force multiplier when moving via mouse
+ACCELERATION = 600.0       # Force multiplier when moving via mouse
 FRICTION = 0.97           # Damping factor applied each frame
-MIN_THRUST = 50         # Distance threshold for max thrust
+MIN_THRUST = 10         # Distance threshold for max thrust
 
 # Fuel and cooldown
 FUEL_CONSUMPTION_RATE = 30

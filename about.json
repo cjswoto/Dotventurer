@@ -4,16 +4,16 @@
   "objects": [
     {
       "shape": "octagon",
-      "color": [255, 200, 50],
+      "color": [255,200,50],
       "size": 12,
       "name": "Player",
-      "description": "Move with mouse, left‑click to thrust"
+      "description": "Move with mouse, left-click to thrust"
     },
     {
       "shape": "irregular",
       "sides": 8,
       "variation": 0.4,
-      "color": [150, 100, 100],
+      "color": [150,100,100],
       "size": 15,
       "name": "Obstacle",
       "description": "Avoid them"
@@ -22,7 +22,7 @@
       "shape": "star",
       "spikes": 5,
       "inner_factor": 0.5,
-      "color": [100, 200, 100],
+      "color": [100,200,100],
       "size": 15,
       "name": "Chaser",
       "description": "Tracks you down (rotates)"
@@ -31,75 +31,75 @@
       "shape": "irregular",
       "sides": 7,
       "variation": 0.3,
-      "color": [100, 100, 200],
+      "color": [100,100,200],
       "size": 15,
       "name": "Splitter",
       "description": "Splits on death"
     },
     {
       "shape": "diamond",
-      "color": [0, 255, 0],
+      "color": [0,255,0],
       "size": 12,
-      "name": "Immunity",
-      "description": "Grants 30‑sec immunity"
+      "name": "Extra Fuel",
+      "description": "Grants 30-sec immunity"
     },
     {
       "shape": "diamond",
-      "color": [255, 215, 0],
+      "color": [255,215,0],
       "size": 12,
       "name": "Score Boost",
       "description": "Gold pickup"
     },
     {
       "shape": "triangle",
-      "color": [255, 105, 180],
+      "color": [255,105,180],
       "size": 12,
       "name": "Boost",
-      "description": "Tail doubled 30 sec & +10% score"
+      "description": "Tail doubled 30 sec & +10% score"
     },
     {
       "shape": "star",
       "spikes": 8,
       "inner_factor": 0.75,
-      "color": [128, 0, 128],
+      "color": [128,0,128],
       "size": 15,
       "name": "Special",
-      "description": "Right‑click to wipe enemies"
+      "description": "Right-click to wipe enemies"
     },
     {
       "shape": "rectangle",
-      "color": [0, 191, 255],
+      "color": [0,191,255],
       "size": 12,
       "name": "Shield",
-      "description": "30‑sec protective shield"
+      "description": "30-sec protective shield"
     },
     {
       "shape": "ellipse",
-      "color": [138, 43, 226],
+      "color": [138,43,226],
       "size": 12,
-      "name": "Slow‑Motion",
-      "description": "Enemies slow for 30 sec"
+      "name": "Slow-Motion",
+      "description": "Enemies slow for 30 sec"
     },
     {
       "shape": "pentagon",
-      "color": [255, 165, 0],
+      "color": [255,165,0],
       "size": 12,
       "name": "Score Multiplier",
-      "description": "Double score for 30 sec"
+      "description": "Double score for 30 sec"
     },
     {
       "shape": "hexagon",
-      "color": [255, 20, 147],
+      "color": [255,20,147],
       "size": 12,
       "name": "Magnet",
-      "description": "Attract pickups for 30 sec"
+      "description": "Attract pickups for 30 sec"
     }
   ],
   "instructions": [
     "Controls:",
     "  - Move mouse to guide player",
-    "  - Left‑click: Thrust (uses fuel)",
-    "  - Right‑click: Activate special",
+    "  - Left-click: Thrust (uses fuel)",
+    "  - Right-click: Activate special",
     "",
     "Objective: Survive, collect powerups, and score as high as possible!"
   ]

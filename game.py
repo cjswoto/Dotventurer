@@ -1,6 +1,6 @@
 # game.py
 # ──────────────────────────────────────────────────────────────
-# Updated build – April 19 2025
+# Updated build – April 19 2025
 # • About‑screen columns already integrated
 # • ExtraFuelPickup renamed ⇒ ImmunityPickup
 # • Timed‑pickup descriptions/durations aligned (30 s)
@@ -379,7 +379,7 @@ class Game:
         # MENU STATE
         if self.state == "menu":
             surf.fill((0, 0, 0))
-            title = pygame.font.SysFont("Arial", 60).render("My Game", True, (255, 255, 255))
+            title = pygame.font.SysFont("Arial", 60).render("Dotventure", True, (255, 255, 255))
             surf.blit(title, (WIDTH//2 - title.get_width()//2, 50))
             for b in self.menu_buttons:
                 b.draw(surf)

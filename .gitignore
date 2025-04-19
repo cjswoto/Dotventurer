@@ -1,0 +1,8 @@
+/build
+/dist
+/__pycache__
+/__pycache__
+__pycache__/config.cpython-310.pyc
+pygbag.toml
+pygbag.toml
+main.spec
