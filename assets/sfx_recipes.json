@@ -1,0 +1,271 @@
+{
+  "base_pickup": {
+    "duration_ms": 320,
+    "headroom_db": -6,
+    "layers": [
+      {
+        "type": "osc",
+        "wave": "triangle",
+        "freq_hz": 760,
+        "amp": 0.5,
+        "env": {"attack_ms": 8, "decay_ms": 120, "sustain": 0.2, "release_ms": 80},
+        "pitch_glide": [0, 4],
+        "randomize": {"pitch_semitones": 0.4, "amp_pct": 0.1}
+      },
+      {
+        "type": "osc",
+        "wave": "sine",
+        "freq_hz": 1140,
+        "amp": 0.3,
+        "env": {"attack_ms": 6, "decay_ms": 100, "sustain": 0.0, "release_ms": 70},
+        "randomize": {"pitch_semitones": 0.5, "amp_pct": 0.12, "start_ms": 12}
+      }
+    ]
+  },
+  "pickup_immunity": {
+    "extends": "base_pickup",
+    "layers": [
+      {
+        "type": "noise",
+        "lp_hz": 4200,
+        "amp": 0.25,
+        "env": {"attack_ms": 12, "decay_ms": 160, "sustain": 0.0, "release_ms": 90},
+        "randomize": {"amp_pct": 0.1}
+      }
+    ]
+  },
+  "pickup_shield": {
+    "extends": "base_pickup",
+    "layers": [
+      {
+        "type": "osc",
+        "wave": "triangle",
+        "freq_hz": 900,
+        "amp": 0.45,
+        "env": {"attack_ms": 8, "decay_ms": 140, "sustain": 0.3, "release_ms": 120},
+        "pitch_glide": [2, 5],
+        "randomize": {"pitch_semitones": 0.3, "amp_pct": 0.1}
+      }
+    ]
+  },
+  "pickup_tail_boost": {
+    "extends": "base_pickup",
+    "layers": [
+      {
+        "type": "osc",
+        "wave": "sine",
+        "freq_hz": 660,
+        "amp": 0.55,
+        "env": {"attack_ms": 6, "decay_ms": 90, "sustain": 0.25, "release_ms": 70},
+        "pitch_glide": [0, 7],
+        "randomize": {"pitch_semitones": 0.5, "amp_pct": 0.1}
+      }
+    ]
+  },
+  "pickup_slow_motion": {
+    "duration_ms": 420,
+    "headroom_db": -6,
+    "layers": [
+      {
+        "type": "osc",
+        "wave": "sine",
+        "freq_hz": 340,
+        "amp": 0.6,
+        "env": {"attack_ms": 10, "decay_ms": 180, "sustain": 0.4, "release_ms": 200},
+        "randomize": {"pitch_semitones": 0.2, "amp_pct": 0.08}
+      },
+      {
+        "type": "noise",
+        "lp_hz": 1800,
+        "amp": 0.25,
+        "env": {"attack_ms": 15, "decay_ms": 160, "sustain": 0.0, "release_ms": 160}
+      }
+    ]
+  },
+  "pickup_score_multiplier": {
+    "duration_ms": 360,
+    "headroom_db": -6,
+    "layers": [
+      {
+        "type": "osc",
+        "wave": "sine",
+        "freq_hz": 520,
+        "amp": 0.4,
+        "env": {"attack_ms": 6, "decay_ms": 90, "sustain": 0.2, "release_ms": 70},
+        "pitch_glide": [0, 7]
+      },
+      {
+        "type": "osc",
+        "wave": "sine",
+        "freq_hz": 780,
+        "amp": 0.35,
+        "env": {"attack_ms": 8, "decay_ms": 100, "sustain": 0.2, "release_ms": 80},
+        "pitch_glide": [0, 12],
+        "randomize": {"pitch_semitones": 0.4, "amp_pct": 0.1, "start_ms": 35}
+      }
+    ]
+  },
+  "pickup_magnet": {
+    "duration_ms": 340,
+    "headroom_db": -6,
+    "layers": [
+      {
+        "type": "osc",
+        "wave": "triangle",
+        "freq_hz": 540,
+        "amp": 0.4,
+        "env": {"attack_ms": 5, "decay_ms": 80, "sustain": 0.2, "release_ms": 60},
+        "randomize": {"start_ms": 0}
+      },
+      {
+        "type": "osc",
+        "wave": "triangle",
+        "freq_hz": 520,
+        "amp": 0.35,
+        "env": {"attack_ms": 12, "decay_ms": 100, "sustain": 0.18, "release_ms": 70},
+        "randomize": {"start_ms": 55}
+      }
+    ]
+  },
+  "pickup_score_boost": {
+    "extends": "base_pickup",
+    "layers": [
+      {
+        "type": "osc",
+        "wave": "sine",
+        "freq_hz": 600,
+        "amp": 0.5,
+        "env": {"attack_ms": 6, "decay_ms": 100, "sustain": 0.0, "release_ms": 60},
+        "randomize": {"amp_pct": 0.15}
+      }
+    ]
+  },
+  "ui_click": {
+    "duration_ms": 120,
+    "headroom_db": -6,
+    "layers": [
+      {
+        "type": "osc",
+        "wave": "square",
+        "freq_hz": 880,
+        "amp": 0.35,
+        "env": {"attack_ms": 2, "decay_ms": 70, "sustain": 0.0, "release_ms": 40},
+        "randomize": {"pitch_semitones": 0.2, "amp_pct": 0.08}
+      }
+    ]
+  },
+  "hit": {
+    "duration_ms": 280,
+    "headroom_db": -6,
+    "layers": [
+      {
+        "type": "noise",
+        "lp_hz": 2600,
+        "amp": 0.5,
+        "env": {"attack_ms": 5, "decay_ms": 140, "sustain": 0.0, "release_ms": 110},
+        "randomize": {"amp_pct": 0.2}
+      },
+      {
+        "type": "osc",
+        "wave": "sine",
+        "freq_hz": 220,
+        "amp": 0.4,
+        "env": {"attack_ms": 6, "decay_ms": 120, "sustain": 0.0, "release_ms": 100}
+      }
+    ]
+  },
+  "explosion": {
+    "duration_ms": 680,
+    "headroom_db": -6,
+    "layers": [
+      {
+        "type": "noise",
+        "lp_hz": 1800,
+        "amp": 0.7,
+        "env": {"attack_ms": 4, "decay_ms": 260, "sustain": 0.0, "release_ms": 220},
+        "randomize": {"amp_pct": 0.25}
+      },
+      {
+        "type": "osc",
+        "wave": "sine",
+        "freq_hz": 90,
+        "amp": 0.55,
+        "env": {"attack_ms": 8, "decay_ms": 300, "sustain": 0.0, "release_ms": 260}
+      }
+    ]
+  },
+  "player_death": {
+    "duration_ms": 700,
+    "headroom_db": -6,
+    "layers": [
+      {
+        "type": "noise",
+        "lp_hz": 1400,
+        "amp": 0.6,
+        "env": {"attack_ms": 6, "decay_ms": 320, "sustain": 0.0, "release_ms": 240},
+        "randomize": {"amp_pct": 0.2}
+      },
+      {
+        "type": "osc",
+        "wave": "sine",
+        "freq_hz": 80,
+        "amp": 0.45,
+        "env": {"attack_ms": 10, "decay_ms": 280, "sustain": 0.0, "release_ms": 240},
+        "pitch_glide": [0, -7]
+      }
+    ]
+  },
+  "special_pickup": {
+    "extends": "base_pickup",
+    "layers": [
+      {
+        "type": "noise",
+        "lp_hz": 3800,
+        "amp": 0.3,
+        "env": {"attack_ms": 12, "decay_ms": 220, "sustain": 0.0, "release_ms": 150}
+      }
+    ]
+  },
+  "special_activate": {
+    "duration_ms": 820,
+    "headroom_db": -6,
+    "layers": [
+      {
+        "type": "noise",
+        "lp_hz": 2400,
+        "amp": 0.6,
+        "env": {"attack_ms": 12, "decay_ms": 420, "sustain": 0.0, "release_ms": 280}
+      },
+      {
+        "type": "osc",
+        "wave": "sine",
+        "freq_hz": 110,
+        "amp": 0.55,
+        "env": {"attack_ms": 10, "decay_ms": 320, "sustain": 0.0, "release_ms": 260}
+      }
+    ]
+  },
+  "player_thrust": {
+    "duration_ms": 520,
+    "loop": true,
+    "loop_length_ms": 520,
+    "headroom_db": -6,
+    "layers": [
+      {
+        "type": "noise",
+        "lp_hz": 1600,
+        "amp": 0.4,
+        "env": {"attack_ms": 20, "decay_ms": 180, "sustain": 0.3, "release_ms": 180},
+        "randomize": {"amp_pct": 0.1}
+      },
+      {
+        "type": "osc",
+        "wave": "triangle",
+        "freq_hz": 420,
+        "amp": 0.25,
+        "env": {"attack_ms": 15, "decay_ms": 200, "sustain": 0.25, "release_ms": 180},
+        "randomize": {"pitch_semitones": 0.3, "amp_pct": 0.08}
+      }
+    ]
+  }
+}
