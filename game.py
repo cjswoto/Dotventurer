@@ -31,6 +31,7 @@ from entities_utils import regular_polygon, irregular_polygon
 from background import Background
 from managers import LevelManager, ExplosionManager, Camera, Timer
 from ui import Button, Leaderboard
+from sound_manager import SoundManager
 
 
 def clamp(v, lo, hi):
@@ -57,6 +58,19 @@ def draw_powerup_icon(surface, pos, effect):
         pygame.draw.polygon(surface, col, regular_polygon((x, y), r, sides, rot))
 
 
+PICKUP_SOUND_MAP = {
+    PowerUp: "pickup_refuel",
+    ImmunityPickup: "pickup_immunity",
+    ScoreBoostPickup: "pickup_score_boost",
+    BoostPickup: "pickup_tail_boost",
+    SpecialPickup: "pickup_special",
+    ShieldPickup: "pickup_shield",
+    SlowMotionPickup: "pickup_slow_motion",
+    ScoreMultiplierPickup: "pickup_score_multiplier",
+    MagnetPickup: "pickup_magnet",
+}
+
+
 # ──────────────────────────────────────────────────────────────
 # Main Game class
 # ──────────────────────────────────────────────────────────────
@@ -80,12 +94,14 @@ class Game:
         self.explosion_manager = ExplosionManager()
         self.camera = Camera()
         self.leaderboard = Leaderboard()
+        self.sound_manager = SoundManager()
 
         # misc gameplay data
         self.powerups = []
         self.flash_messages = []
         self.score = 0
         self.slow_multiplier = 1
+        self.attack_active = False
 
         # UI buttons
         self.menu_buttons = [
@@ -124,6 +140,7 @@ class Game:
         return obs
 
     def reset(self):
+        self.sound_manager.stop_all()
         self.player = Player()
         self.level_manager = LevelManager()
         self.obstacles = [self.spawn_obstacle() for _ in range(5)]
@@ -135,6 +152,7 @@ class Game:
         self.camera = Camera()
         self.flash_messages = []
         self.slow_multiplier = 1
+        self.attack_active = False
 
     # ──────────────────────────────────────────────────────
     # Event handling
@@ -191,11 +209,13 @@ class Game:
         bonus = sum(o.score_value for o in self.obstacles)
         for o in self.obstacles:
             self.explosion_manager.add(o.pos.copy())
+            self.sound_manager.play("explosion")
         self.obstacles.clear()
         self.score += bonus
         self.player.special_active = True
         self.player.special_timer  = 3
         self.player.special_pickup = None
+        self.sound_manager.play("special_activate")
 
     def _expire_effects(self, now):
         if self.player.immune and now > getattr(self.player, "immune_timer", 0):
@@ -216,6 +236,9 @@ class Game:
     # Update loop
     def update(self, dt):
         if self.state != "playing":
+            if self.attack_active:
+                self.sound_manager.stop_loop("player_attack")
+                self.attack_active = False
             self.flash_messages = [f for f in self.flash_messages if time.time() < f["timer"]]
             return
 
@@ -247,6 +270,13 @@ class Game:
             if self.player.cooldown_timer <= 0:
                 self.player.emitting_cooldown = False
 
+        if emitting and not self.attack_active:
+            self.sound_manager.play_loop("player_attack")
+            self.attack_active = True
+        elif not emitting and self.attack_active:
+            self.sound_manager.stop_loop("player_attack")
+            self.attack_active = False
+
         self.emitter.pos = self.player.pos.copy()
         self.emitter.update(dt, emitting)
 
@@ -262,11 +292,16 @@ class Game:
                 if self.player.shield_active:
                     self.player.shield_active = False
                     self.explosion_manager.add(o.pos.copy())
+                    self.sound_manager.play("explosion")
                     if hasattr(o, "split"): self.obstacles.extend(o.split())
                     self.obstacles.remove(o)
                     continue
                 self.explosion_manager.add(self.player.pos.copy())
+                self.sound_manager.play("explosion")
                 self.camera.shake(0.5, 15)
+                if self.attack_active:
+                    self.sound_manager.stop_loop("player_attack")
+                    self.attack_active = False
                 self.state = "gameover"
                 return
 
@@ -278,8 +313,10 @@ class Game:
                     self.flash_messages.append({"text": str(o.score_value), "timer": now + 1.5,
                                                 "pos": (int(o.pos[0]), int(o.pos[1])), "font_size": 25})
                     if o.explode: self.explosion_manager.add(o.pos.copy())
+                    if o.explode: self.sound_manager.play("explosion")
                     if hasattr(o, "split"): self.obstacles.extend(o.split())
                     self.obstacles.remove(o)
+                    self.sound_manager.play("player_attack_hit")
                     if p in self.emitter.particles:
                         self.emitter.particles.remove(p)
                     break
@@ -289,9 +326,12 @@ class Game:
             for pt in self.player.trail[::5]:
                 if np.linalg.norm(np.array(pt) - o.pos) < o.radius:
                     self.score += 25
-                    if o.explode: self.explosion_manager.add(o.pos.copy())
+                    if o.explode:
+                        self.explosion_manager.add(o.pos.copy())
+                        self.sound_manager.play("explosion")
                     if hasattr(o, "split"): self.obstacles.extend(o.split())
                     self.obstacles.remove(o)
+                    self.sound_manager.play("player_attack_hit")
                     break
 
         # Spawn new pickups
@@ -310,6 +350,7 @@ class Game:
                 txt = getattr(pu, "effect", pu.__class__.__name__)
                 self.flash_messages.append({"text": txt, "timer": now + 2,
                                             "pos": (WIDTH // 2, HEIGHT // 2), "font_size": 50})
+                pickup_sound_key = PICKUP_SOUND_MAP.get(type(pu))
 
                 if isinstance(pu, PowerUp):
                     # Instant refuel & cooldown clear
@@ -339,6 +380,8 @@ class Game:
                 elif isinstance(pu, SpecialPickup):
                     self.player.special_pickup = pu
 
+                if pickup_sound_key:
+                    self.sound_manager.play(pickup_sound_key)
                 self.powerups.remove(pu)
 
         # Magnet attraction

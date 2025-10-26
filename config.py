@@ -1,6 +1,12 @@
 # config.py
 # All configurable constants and settings
 
+import os
+
+DEFAULT_LOG_ENABLED = False
+_env_log_flag = os.getenv("DOTVENTURER_LOG_ENABLED")
+LOG_ENABLED = DEFAULT_LOG_ENABLED if _env_log_flag is None else _env_log_flag == "1"
+
 # Window dimensions (increased 25%: 800×600 → 1000×750)
 WIDTH = 1920
 HEIGHT = 1080
