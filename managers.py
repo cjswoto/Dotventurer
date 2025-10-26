@@ -41,10 +41,13 @@ class Explosion:
             p.draw(surf)
 
 class ExplosionManager:
-    def __init__(self):
+    def __init__(self, sound_manager=None):
         self.explosions = []
+        self.sound_manager = sound_manager
     def add(self, pos):
         self.explosions.append(Explosion(pos))
+        if self.sound_manager:
+            self.sound_manager.play("explosion")
     def update(self, dt):
         for exp in self.explosions:
             exp.update(dt)

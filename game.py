@@ -30,6 +30,7 @@ from entities import (
 from entities_utils import regular_polygon, irregular_polygon
 from background import Background
 from managers import LevelManager, ExplosionManager, Camera, Timer
+from sound_manager import SoundManager
 from ui import Button, Leaderboard
 
 
@@ -67,6 +68,8 @@ class Game:
         self.window = pygame.display.set_mode((info.current_w, info.current_h))
         self.clock = pygame.time.Clock()
 
+        self.sound_manager = SoundManager()
+
         # core state
         self.state = "menu"
         self.player = Player()
@@ -77,7 +80,7 @@ class Game:
         self.emitter = Emitter(self.player.pos)
         self.power_timer = Timer(7)
         self.background = Background()
-        self.explosion_manager = ExplosionManager()
+        self.explosion_manager = ExplosionManager(self.sound_manager)
         self.camera = Camera()
         self.leaderboard = Leaderboard()
 
@@ -124,6 +127,7 @@ class Game:
         return obs
 
     def reset(self):
+        self.sound_manager.stop("player_fire")
         self.player = Player()
         self.level_manager = LevelManager()
         self.obstacles = [self.spawn_obstacle() for _ in range(5)]
@@ -131,7 +135,7 @@ class Game:
         self.powerups = []
         self.power_timer.reset()
         self.score = 0
-        self.explosion_manager = ExplosionManager()
+        self.explosion_manager = ExplosionManager(self.sound_manager)
         self.camera = Camera()
         self.flash_messages = []
         self.slow_multiplier = 1
@@ -192,6 +196,7 @@ class Game:
         for o in self.obstacles:
             self.explosion_manager.add(o.pos.copy())
         self.obstacles.clear()
+        self.sound_manager.play("special_activate")
         self.score += bonus
         self.player.special_active = True
         self.player.special_timer  = 3
@@ -216,6 +221,7 @@ class Game:
     # Update loop
     def update(self, dt):
         if self.state != "playing":
+            self.sound_manager.stop("player_fire")
             self.flash_messages = [f for f in self.flash_messages if time.time() < f["timer"]]
             return
 
@@ -239,6 +245,7 @@ class Game:
                 self.player.fuel = 0
                 self.player.emitting_cooldown = True
                 self.player.cooldown_timer = COOLDOWN_DURATION
+                self.sound_manager.stop("player_fire")
             emitting = True
 
         self.player.fuel = min(self.player.max_fuel, self.player.fuel + FUEL_RECHARGE_RATE * dt)
@@ -249,6 +256,10 @@ class Game:
 
         self.emitter.pos = self.player.pos.copy()
         self.emitter.update(dt, emitting)
+        if emitting:
+            self.sound_manager.loop("player_fire")
+        else:
+            self.sound_manager.stop("player_fire")
 
         # Obstacle movement
         for o in self.obstacles:
@@ -267,6 +278,7 @@ class Game:
                     continue
                 self.explosion_manager.add(self.player.pos.copy())
                 self.camera.shake(0.5, 15)
+                self.sound_manager.stop("player_fire")
                 self.state = "gameover"
                 return
 
@@ -311,14 +323,17 @@ class Game:
                 self.flash_messages.append({"text": txt, "timer": now + 2,
                                             "pos": (WIDTH // 2, HEIGHT // 2), "font_size": 50})
 
+                sound_key = None
                 if isinstance(pu, PowerUp):
                     # Instant refuel & cooldown clear
                     self.player.fuel = self.player.max_fuel
                     self.player.emitting_cooldown = False
                     self.player.cooldown_timer = 0
+                    sound_key = "pickup_refuel"
 
                 elif hasattr(pu, "effect"):
                     eff = pu.effect
+                    sound_key = f"pickup_{eff}"
                     if eff == "immunity":
                         self.player.immune = True; self.player.immune_timer = now + pu.duration
                     elif eff == "tail_boost":
@@ -336,8 +351,13 @@ class Game:
 
                 elif isinstance(pu, ScoreBoostPickup):
                     self.score += 100
+                    sound_key = "pickup_score_boost"
                 elif isinstance(pu, SpecialPickup):
                     self.player.special_pickup = pu
+                    sound_key = "pickup_special"
+
+                if sound_key:
+                    self.sound_manager.play(sound_key)
 
                 self.powerups.remove(pu)
 
