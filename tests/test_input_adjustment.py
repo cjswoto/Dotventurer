@@ -20,7 +20,8 @@ if "numpy" not in sys.modules:
     numpy_stub.linalg = types.SimpleNamespace(norm=lambda _: 0)
     sys.modules["numpy"] = numpy_stub
 
-from game import adjust_mouse_to_viewport
+from config import WIDTH, HEIGHT
+from game import adjust_mouse_to_viewport, viewport_to_world
 
 
 class AdjustMouseToViewportTest(unittest.TestCase):
@@ -44,6 +45,20 @@ class AdjustMouseToViewportTest(unittest.TestCase):
             adjust_mouse_to_viewport((5000, -10), (2500, 1300)),
             (1920, 0),
         )
+
+
+class ViewportToWorldTest(unittest.TestCase):
+    def test_returns_camera_position_when_cursor_centered(self):
+        camera = [345.0, 678.0]
+        world = viewport_to_world(camera, (WIDTH / 2, HEIGHT / 2))
+        self.assertAlmostEqual(world[0], camera[0])
+        self.assertAlmostEqual(world[1], camera[1])
+
+    def test_applies_offset_from_center(self):
+        camera = [100.0, 200.0]
+        world = viewport_to_world(camera, (WIDTH / 2 + 15, HEIGHT / 2 - 25))
+        self.assertAlmostEqual(world[0], 115.0)
+        self.assertAlmostEqual(world[1], 175.0)
 
 
 if __name__ == "__main__":

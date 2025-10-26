@@ -65,6 +65,14 @@ def adjust_mouse_to_viewport(mouse_pos, window_size):
     return adjusted_x, adjusted_y
 
 
+def viewport_to_world(camera_pos, viewport_pos):
+    cx, cy = float(camera_pos[0]), float(camera_pos[1])
+    vx, vy = float(viewport_pos[0]), float(viewport_pos[1])
+    dx = vx - WIDTH / 2
+    dy = vy - HEIGHT / 2
+    return np.array([cx + dx, cy + dy], dtype=float)
+
+
 # ──────────────────────────────────────────────────────────────
 # Helper – 20 px pickup icon (no surrounding frame)
 # ──────────────────────────────────────────────────────────────
@@ -255,11 +263,11 @@ class Game:
         # Player movement
         raw_mouse = pygame.mouse.get_pos()
         mx, my = adjust_mouse_to_viewport(raw_mouse, self.window.get_size())
-        world_mouse = np.array([mx, my], dtype=float)
+        world_mouse = viewport_to_world(self.camera_pos, (mx, my))
         if LOG_ENABLED:
             log_debug(
                 "Game.update mouse raw="
-                f"{raw_mouse} adjusted=({mx}, {my}) "
+                f"{raw_mouse} adjusted=({mx}, {my}) world=({world_mouse[0]:.2f}, {world_mouse[1]:.2f}) "
                 f"player_pos=({self.player.pos[0]:.2f}, {self.player.pos[1]:.2f})"
             )
         self.player.update(dt, world_mouse)
