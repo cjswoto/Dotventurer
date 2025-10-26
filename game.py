@@ -14,11 +14,14 @@ import time
 import sys
 import json
 import math
+from datetime import datetime
+from pathlib import Path
 
 from config import (
     WIDTH, HEIGHT,
     settings_data, FUEL_CONSUMPTION_RATE,
-    FUEL_RECHARGE_RATE, COOLDOWN_DURATION
+    FUEL_RECHARGE_RATE, COOLDOWN_DURATION,
+    LOG_ENABLED
 )
 from entities import (
     Player, Obstacle, PowerUp, ImmunityPickup,
@@ -35,6 +38,31 @@ from ui import Button, Leaderboard
 
 def clamp(v, lo, hi):
     return max(lo, min(v, hi))
+
+
+def log_debug(message):
+    if not LOG_ENABLED:
+        return
+    log_dir = Path("logs")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.utcnow().isoformat(timespec="milliseconds")
+    with open(log_dir / "debug.txt", "a", encoding="utf-8") as log_file:
+        log_file.write(f"{timestamp} {message}\n")
+
+
+def adjust_mouse_to_viewport(mouse_pos, window_size):
+    w, h = window_size
+    x_off = (w - WIDTH) // 2
+    y_off = (h - HEIGHT) // 2
+    adjusted_x = clamp(mouse_pos[0] - x_off, 0, WIDTH)
+    adjusted_y = clamp(mouse_pos[1] - y_off, 0, HEIGHT)
+    if LOG_ENABLED:
+        log_debug(
+            "adjust_mouse_to_viewport raw="
+            f"{mouse_pos} offsets=({x_off}, {y_off}) "
+            f"adjusted=({adjusted_x}, {adjusted_y})"
+        )
+    return adjusted_x, adjusted_y
 
 
 # ──────────────────────────────────────────────────────────────
@@ -225,11 +253,15 @@ class Game:
         self._expire_effects(now)
 
         # Player movement
-        mx, my = pygame.mouse.get_pos()
-        w, h = self.window.get_size()
-        x_off, y_off = (w - WIDTH) // 2, (h - HEIGHT) // 2
-        mx, my = clamp(mx - x_off, 0, WIDTH), clamp(my - y_off, 0, HEIGHT)
-        world_mouse = self.camera_pos + np.array([mx - WIDTH/2, my - HEIGHT/2])
+        raw_mouse = pygame.mouse.get_pos()
+        mx, my = adjust_mouse_to_viewport(raw_mouse, self.window.get_size())
+        world_mouse = np.array([mx, my], dtype=float)
+        if LOG_ENABLED:
+            log_debug(
+                "Game.update mouse raw="
+                f"{raw_mouse} adjusted=({mx}, {my}) "
+                f"player_pos=({self.player.pos[0]:.2f}, {self.player.pos[1]:.2f})"
+            )
         self.player.update(dt, world_mouse)
 
         # Camera follow with dead‑zone
@@ -550,8 +582,7 @@ class Game:
             dt = self.clock.tick(settings_data["FPS"]) / 1000.0
             w, h = self.window.get_size()
             x_off, y_off = (w - WIDTH) // 2, (h - HEIGHT) // 2
-            adj_mouse = (pygame.mouse.get_pos()[0] - x_off,
-                         pygame.mouse.get_pos()[1] - y_off)
+            adj_mouse = adjust_mouse_to_viewport(pygame.mouse.get_pos(), (w, h))
 
             for ev in pygame.event.get():
                 if ev.type == pygame.QUIT:

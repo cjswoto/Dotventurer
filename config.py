@@ -1,3 +1,5 @@
+import os
+
 # config.py
 # All configurable constants and settings
 
@@ -39,3 +41,5 @@ settings_data = {
     "EMITTER_CONE_ANGLE": EMITTER_CONE_ANGLE,
     "PARTICLE_RATE": PARTICLE_RATE
 }
+
+LOG_ENABLED = os.getenv("DOTVENTURER_LOG_ENABLED", "0") == "1"
