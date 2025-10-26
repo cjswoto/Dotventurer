@@ -5,6 +5,10 @@ import math
 import pygame
 import time
 
+from config import LOG_ENABLED
+from logging_utils import log_debug
+from sound_manager import sound_manager
+
 class Timer:
     def __init__(self, duration):
         self.duration = duration
@@ -44,12 +48,19 @@ class ExplosionManager:
     def __init__(self):
         self.explosions = []
     def add(self, pos):
+        if LOG_ENABLED:
+            log_debug(f"ExplosionManager.add pos={pos}")
+        sound_manager.play("explosion")
         self.explosions.append(Explosion(pos))
     def update(self, dt):
+        if LOG_ENABLED:
+            log_debug(f"ExplosionManager.update dt={dt}")
         for exp in self.explosions:
             exp.update(dt)
         self.explosions = [e for e in self.explosions if not e.done]
     def draw(self, surf):
+        if LOG_ENABLED:
+            log_debug("ExplosionManager.draw")
         for exp in self.explosions:
             exp.draw(surf)
 

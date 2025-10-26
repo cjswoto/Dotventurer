@@ -18,7 +18,8 @@ import math
 from config import (
     WIDTH, HEIGHT,
     settings_data, FUEL_CONSUMPTION_RATE,
-    FUEL_RECHARGE_RATE, COOLDOWN_DURATION
+    FUEL_RECHARGE_RATE, COOLDOWN_DURATION,
+    LOG_ENABLED
 )
 from entities import (
     Player, Obstacle, PowerUp, ImmunityPickup,
@@ -30,6 +31,8 @@ from entities import (
 from entities_utils import regular_polygon, irregular_polygon
 from background import Background
 from managers import LevelManager, ExplosionManager, Camera, Timer
+from logging_utils import log_debug
+from sound_manager import sound_manager
 from ui import Button, Leaderboard
 
 
@@ -188,6 +191,8 @@ class Game:
     # ──────────────────────────────────────────────────────
     # Gameplay helpers
     def _activate_special(self):
+        if LOG_ENABLED:
+            log_debug("Game._activate_special")
         bonus = sum(o.score_value for o in self.obstacles)
         for o in self.obstacles:
             self.explosion_manager.add(o.pos.copy())
@@ -196,6 +201,7 @@ class Game:
         self.player.special_active = True
         self.player.special_timer  = 3
         self.player.special_pickup = None
+        sound_manager.play("special_activation")
 
     def _expire_effects(self, now):
         if self.player.immune and now > getattr(self.player, "immune_timer", 0):
@@ -215,6 +221,8 @@ class Game:
     # ──────────────────────────────────────────────────────
     # Update loop
     def update(self, dt):
+        if LOG_ENABLED:
+            log_debug(f"Game.update state={self.state} dt={dt}")
         if self.state != "playing":
             self.flash_messages = [f for f in self.flash_messages if time.time() < f["timer"]]
             return
@@ -282,6 +290,9 @@ class Game:
                     self.obstacles.remove(o)
                     if p in self.emitter.particles:
                         self.emitter.particles.remove(p)
+                    if LOG_ENABLED:
+                        log_debug(f"Game.update particle_hit score={self.score}")
+                    sound_manager.play("attack_hit")
                     break
 
         # Trail vs obstacle
@@ -292,6 +303,9 @@ class Game:
                     if o.explode: self.explosion_manager.add(o.pos.copy())
                     if hasattr(o, "split"): self.obstacles.extend(o.split())
                     self.obstacles.remove(o)
+                    if LOG_ENABLED:
+                        log_debug("Game.update trail_hit")
+                    sound_manager.play("trail_hit")
                     break
 
         # Spawn new pickups
@@ -339,6 +353,9 @@ class Game:
                 elif isinstance(pu, SpecialPickup):
                     self.player.special_pickup = pu
 
+                if LOG_ENABLED:
+                    log_debug(f"Game.update pickup {pu.__class__.__name__}")
+                sound_manager.play_for_pickup(pu)
                 self.powerups.remove(pu)
 
         # Magnet attraction
