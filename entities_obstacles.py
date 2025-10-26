@@ -4,7 +4,7 @@ import pygame
 import random
 import math
 import numpy as np
-from config import WIDTH, HEIGHT, WORLD_WIDTH, WORLD_HEIGHT
+from config import WIDTH, HEIGHT
 from entities_utils import irregular_polygon, star_polygon
 
 class Obstacle:
@@ -31,14 +31,25 @@ class Obstacle:
             self.pos = pos
         else:
             self.pos = np.array([
-                random.randint(0, WORLD_WIDTH),
-                random.randint(0, WORLD_HEIGHT)
+                random.randint(0, WIDTH),
+                random.randint(0, HEIGHT)
             ], dtype=float)
 
     def update(self, dt, player_pos=None):
-        self.pos[0] += math.cos(self.direction) * self.speed * dt
-        self.pos[1] += math.sin(self.direction) * self.speed * dt
-        # wrapping or reposition logic can follow here
+        dx = math.cos(self.direction) * self.speed * dt
+        dy = math.sin(self.direction) * self.speed * dt
+        self.pos[0] += dx
+        self.pos[1] += dy
+
+        min_x, max_x = self.radius, WIDTH - self.radius
+        min_y, max_y = self.radius, HEIGHT - self.radius
+
+        if self.pos[0] < min_x or self.pos[0] > max_x:
+            self.pos[0] = max(min_x, min(self.pos[0], max_x))
+            self.direction = math.pi - self.direction
+        if self.pos[1] < min_y or self.pos[1] > max_y:
+            self.pos[1] = max(min_y, min(self.pos[1], max_y))
+            self.direction = -self.direction
 
     def draw(self, surf):
         pts = irregular_polygon(
