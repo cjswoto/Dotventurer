@@ -15,10 +15,12 @@ import sys
 import json
 import math
 
+from audio import SFX
 from config import (
     WIDTH, HEIGHT,
     settings_data, FUEL_CONSUMPTION_RATE,
-    FUEL_RECHARGE_RATE, COOLDOWN_DURATION
+    FUEL_RECHARGE_RATE, COOLDOWN_DURATION,
+    AUDIO_ENABLED
 )
 from entities import (
     Player, Obstacle, PowerUp, ImmunityPickup,
@@ -66,6 +68,9 @@ class Game:
         info = pygame.display.Info()
         self.window = pygame.display.set_mode((info.current_w, info.current_h))
         self.clock = pygame.time.Clock()
+
+        self.sfx = SFX(enable_audio=AUDIO_ENABLED)
+        self._thrust_loop_active = False
 
         # core state
         self.state = "menu"
@@ -124,6 +129,7 @@ class Game:
         return obs
 
     def reset(self):
+        self._stop_thrust_loop()
         self.player = Player()
         self.level_manager = LevelManager()
         self.obstacles = [self.spawn_obstacle() for _ in range(5)]
@@ -145,6 +151,7 @@ class Game:
             if self.state == "menu":
                 for b in self.menu_buttons:
                     if b.is_hovered(pos):
+                        self._play_ui_click()
                         if   b.text == "Start Game":    self.reset(); self.state = "playing"
                         elif b.text == "Settings":      self.state = "settings"
                         elif b.text == "Score Board":   self.state = "scoreboard"
@@ -158,17 +165,22 @@ class Game:
                     plus  = pygame.Rect(WIDTH/2+90, y, 30, 30)
                     if minus.collidepoint(pos):
                         settings_data[key] = clamp(settings_data[key] - self.settings_steps[key], 0, 1e9)
+                        self._play_ui_click()
                     elif plus.collidepoint(pos):
                         settings_data[key] += self.settings_steps[key]
+                        self._play_ui_click()
                 if self.settings_back_button.is_hovered(pos):
+                    self._play_ui_click()
                     self.state = "menu"
 
             elif self.state in ("scoreboard", "about"):
                 if self.back_button.is_hovered(pos):
+                    self._play_ui_click()
                     self.state = "menu"
 
             elif self.state == "gameover":
                 if self.restart_button.is_hovered(pos):
+                    self._play_ui_click()
                     self.leaderboard.add_score(self.score)
                     self.reset(); self.state = "playing"
 
@@ -178,10 +190,13 @@ class Game:
 
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE and self.state == "playing":
+                self._stop_thrust_loop()
                 self.state = "menu"
             elif self.state == "menu" and event.key == pygame.K_SPACE:
+                self._play_ui_click()
                 self.reset(); self.state = "playing"
             elif self.state == "gameover" and event.key == pygame.K_r:
+                self._play_ui_click()
                 self.leaderboard.add_score(self.score)
                 self.reset(); self.state = "playing"
 
@@ -191,11 +206,13 @@ class Game:
         bonus = sum(o.score_value for o in self.obstacles)
         for o in self.obstacles:
             self.explosion_manager.add(o.pos.copy())
+            self._emit_explosion(o.pos)
         self.obstacles.clear()
         self.score += bonus
         self.player.special_active = True
         self.player.special_timer  = 3
         self.player.special_pickup = None
+        self._play_sfx("special_activate", self.player.pos)
 
     def _expire_effects(self, now):
         if self.player.immune and now > getattr(self.player, "immune_timer", 0):
@@ -212,10 +229,42 @@ class Game:
         if self.player.magnet_active and now > getattr(self.player, "magnet_timer", 0):
             self.player.magnet_active = False
 
+    def _play_sfx(self, event, pos=None):
+        if not getattr(self, "sfx", None):
+            return
+        world = pos if pos is not None else self.player.pos
+        if isinstance(world, np.ndarray):
+            world = world.tolist()
+        position = (float(world[0]), float(world[1]))
+        self.sfx.play(event, pos=position, screen_size=(WIDTH, HEIGHT))
+
+    def _play_ui_click(self):
+        if getattr(self, "sfx", None):
+            self.sfx.play("ui_click")
+
+    def _emit_explosion(self, pos):
+        self._play_sfx("explosion", pos)
+        self.sfx.duck("loops", gain_db=-6.0, ms=250)
+
+    def _update_thrust_loop(self, emitting):
+        if emitting and not self._thrust_loop_active:
+            self.sfx.play_loop("player_thrust", pos=(float(self.player.pos[0]), float(self.player.pos[1])),
+                               screen_size=(WIDTH, HEIGHT))
+            self._thrust_loop_active = True
+        elif not emitting and self._thrust_loop_active:
+            self._stop_thrust_loop()
+
+    def _stop_thrust_loop(self):
+        if self._thrust_loop_active:
+            self.sfx.stop_loop("player_thrust")
+            self._thrust_loop_active = False
+
     # ──────────────────────────────────────────────────────
     # Update loop
     def update(self, dt):
+        self.sfx.update(dt)
         if self.state != "playing":
+            self._stop_thrust_loop()
             self.flash_messages = [f for f in self.flash_messages if time.time() < f["timer"]]
             return
 
@@ -249,6 +298,7 @@ class Game:
 
         self.emitter.pos = self.player.pos.copy()
         self.emitter.update(dt, emitting)
+        self._update_thrust_loop(emitting)
 
         # Obstacle movement
         for o in self.obstacles:
@@ -262,12 +312,16 @@ class Game:
                 if self.player.shield_active:
                     self.player.shield_active = False
                     self.explosion_manager.add(o.pos.copy())
+                    self._emit_explosion(o.pos)
                     if hasattr(o, "split"): self.obstacles.extend(o.split())
                     self.obstacles.remove(o)
                     continue
                 self.explosion_manager.add(self.player.pos.copy())
+                self._emit_explosion(self.player.pos)
                 self.camera.shake(0.5, 15)
+                self._play_sfx("player_death", self.player.pos)
                 self.state = "gameover"
+                self._stop_thrust_loop()
                 return
 
         # Particles vs obstacle
@@ -278,6 +332,10 @@ class Game:
                     self.flash_messages.append({"text": str(o.score_value), "timer": now + 1.5,
                                                 "pos": (int(o.pos[0]), int(o.pos[1])), "font_size": 25})
                     if o.explode: self.explosion_manager.add(o.pos.copy())
+                    if o.explode:
+                        self._emit_explosion(o.pos)
+                    else:
+                        self._play_sfx("hit", o.pos)
                     if hasattr(o, "split"): self.obstacles.extend(o.split())
                     self.obstacles.remove(o)
                     if p in self.emitter.particles:
@@ -290,6 +348,10 @@ class Game:
                 if np.linalg.norm(np.array(pt) - o.pos) < o.radius:
                     self.score += 25
                     if o.explode: self.explosion_manager.add(o.pos.copy())
+                    if o.explode:
+                        self._emit_explosion(o.pos)
+                    else:
+                        self._play_sfx("hit", o.pos)
                     if hasattr(o, "split"): self.obstacles.extend(o.split())
                     self.obstacles.remove(o)
                     break
@@ -316,28 +378,37 @@ class Game:
                     self.player.fuel = self.player.max_fuel
                     self.player.emitting_cooldown = False
                     self.player.cooldown_timer = 0
+                    self._play_sfx("pickup_score_boost", pu.pos)
 
                 elif hasattr(pu, "effect"):
                     eff = pu.effect
                     if eff == "immunity":
                         self.player.immune = True; self.player.immune_timer = now + pu.duration
+                        self._play_sfx("pickup_immunity", pu.pos)
                     elif eff == "tail_boost":
                         self.player.tail_multiplier = 2; self.player.tail_boost_timer = now + pu.duration
                         self.score += self.score * pu.score_bonus_factor
+                        self._play_sfx("pickup_tail_boost", pu.pos)
                     elif eff == "shield":
                         self.player.shield_active = True; self.player.shield_timer = now + pu.duration
+                        self._play_sfx("pickup_shield", pu.pos)
                     elif eff == "slow_motion":
                         self.slow_multiplier = 0.5; self.slow_timer = now + pu.duration
                         self.player.slow_motion_active = True
+                        self._play_sfx("pickup_slow_motion", pu.pos)
                     elif eff == "score_multiplier":
                         self.player.score_multiplier = pu.multiplier; self.player.score_multiplier_timer = now + pu.duration
+                        self._play_sfx("pickup_score_multiplier", pu.pos)
                     elif eff == "magnet":
                         self.player.magnet_active = True; self.player.magnet_timer = now + pu.duration
+                        self._play_sfx("pickup_magnet", pu.pos)
 
                 elif isinstance(pu, ScoreBoostPickup):
                     self.score += 100
+                    self._play_sfx("pickup_score_boost", pu.pos)
                 elif isinstance(pu, SpecialPickup):
                     self.player.special_pickup = pu
+                    self._play_sfx("special_pickup", pu.pos)
 
                 self.powerups.remove(pu)
 
