@@ -14,12 +14,14 @@ import time
 import sys
 import json
 import math
+from typing import Optional
 
 from config import (
     WIDTH, HEIGHT,
     settings_data, FUEL_CONSUMPTION_RATE,
     FUEL_RECHARGE_RATE, COOLDOWN_DURATION
 )
+from audio.sfx import SFX
 from entities import (
     Player, Obstacle, PowerUp, ImmunityPickup,
     ScoreBoostPickup, BoostPickup, SpecialPickup,
@@ -61,7 +63,7 @@ def draw_powerup_icon(surface, pos, effect):
 # Main Game class
 # ──────────────────────────────────────────────────────────────
 class Game:
-    def __init__(self):
+    def __init__(self, sfx: Optional[SFX] = None):
         pygame.init()
         info = pygame.display.Info()
         self.window = pygame.display.set_mode((info.current_w, info.current_h))
@@ -71,6 +73,8 @@ class Game:
         self.state = "menu"
         self.player = Player()
         self.level_manager = LevelManager()
+        self.sfx = sfx
+        self.thrust_loop_active = False
 
         # world objects / managers
         self.obstacles = [self.spawn_obstacle() for _ in range(5)]
@@ -102,6 +106,34 @@ class Game:
         self.restart_button = Button((WIDTH/2-100,HEIGHT/2+50, 200, 50), "Restart", 30)
 
         self.about_data = self._load_about()
+
+    def _play_sfx(self, event: str, pos: Optional[np.ndarray] = None) -> None:
+        if not self.sfx:
+            return
+        position = None if pos is None else (float(pos[0]), float(pos[1]))
+        self.sfx.play(event, pos=position, screen_size=self.window.get_size())
+
+    def _play_loop(self, event: str, pos: Optional[np.ndarray] = None) -> None:
+        if not self.sfx:
+            return
+        position = None if pos is None else (float(pos[0]), float(pos[1]))
+        self.sfx.play_loop(event, pos=position, screen_size=self.window.get_size())
+
+    def _stop_loop(self, event: str) -> None:
+        if self.sfx:
+            self.sfx.stop_loop(event)
+
+    def _duck_loops(self, gain_db: float = -6.0, ms: int = 250) -> None:
+        if self.sfx:
+            self.sfx.duck("loops", gain_db=gain_db, ms=ms)
+
+    def _stop_thrust_loop(self) -> None:
+        if self.thrust_loop_active:
+            self._stop_loop("player_thrust")
+            self.thrust_loop_active = False
+
+    def _play_ui_click(self) -> None:
+        self._play_sfx("ui_click")
 
     # ──────────────────────────────────────────────────────
     # Utility loaders
@@ -135,6 +167,7 @@ class Game:
         self.camera = Camera()
         self.flash_messages = []
         self.slow_multiplier = 1
+        self._stop_thrust_loop()
 
     # ──────────────────────────────────────────────────────
     # Event handling
@@ -145,6 +178,7 @@ class Game:
             if self.state == "menu":
                 for b in self.menu_buttons:
                     if b.is_hovered(pos):
+                        self._play_ui_click()
                         if   b.text == "Start Game":    self.reset(); self.state = "playing"
                         elif b.text == "Settings":      self.state = "settings"
                         elif b.text == "Score Board":   self.state = "scoreboard"
@@ -157,18 +191,23 @@ class Game:
                     minus = pygame.Rect(WIDTH/2+50, y, 30, 30)
                     plus  = pygame.Rect(WIDTH/2+90, y, 30, 30)
                     if minus.collidepoint(pos):
+                        self._play_ui_click()
                         settings_data[key] = clamp(settings_data[key] - self.settings_steps[key], 0, 1e9)
                     elif plus.collidepoint(pos):
-                        settings_data[key] += self.settings_steps[key]
+                        self._play_ui_click()
+                        settings_data[key] = clamp(settings_data[key] + self.settings_steps[key], 0, 1e9)
                 if self.settings_back_button.is_hovered(pos):
+                    self._play_ui_click()
                     self.state = "menu"
 
             elif self.state in ("scoreboard", "about"):
                 if self.back_button.is_hovered(pos):
+                    self._play_ui_click()
                     self.state = "menu"
 
             elif self.state == "gameover":
                 if self.restart_button.is_hovered(pos):
+                    self._play_ui_click()
                     self.leaderboard.add_score(self.score)
                     self.reset(); self.state = "playing"
 
@@ -178,10 +217,13 @@ class Game:
 
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE and self.state == "playing":
+                self._play_ui_click()
                 self.state = "menu"
             elif self.state == "menu" and event.key == pygame.K_SPACE:
+                self._play_ui_click()
                 self.reset(); self.state = "playing"
             elif self.state == "gameover" and event.key == pygame.K_r:
+                self._play_ui_click()
                 self.leaderboard.add_score(self.score)
                 self.reset(); self.state = "playing"
 
@@ -193,6 +235,8 @@ class Game:
             self.explosion_manager.add(o.pos.copy())
         self.obstacles.clear()
         self.score += bonus
+        self._play_sfx("special_activate", self.player.pos)
+        self._duck_loops()
         self.player.special_active = True
         self.player.special_timer  = 3
         self.player.special_pickup = None
@@ -216,6 +260,7 @@ class Game:
     # Update loop
     def update(self, dt):
         if self.state != "playing":
+            self._stop_thrust_loop()
             self.flash_messages = [f for f in self.flash_messages if time.time() < f["timer"]]
             return
 
@@ -241,6 +286,12 @@ class Game:
                 self.player.cooldown_timer = COOLDOWN_DURATION
             emitting = True
 
+        if emitting and not self.thrust_loop_active:
+            self._play_loop("player_thrust", self.player.pos)
+            self.thrust_loop_active = True
+        elif not emitting:
+            self._stop_thrust_loop()
+
         self.player.fuel = min(self.player.max_fuel, self.player.fuel + FUEL_RECHARGE_RATE * dt)
         if self.player.emitting_cooldown:
             self.player.cooldown_timer -= dt
@@ -262,10 +313,15 @@ class Game:
                 if self.player.shield_active:
                     self.player.shield_active = False
                     self.explosion_manager.add(o.pos.copy())
+                    self._play_sfx("explosion", o.pos)
+                    self._duck_loops()
                     if hasattr(o, "split"): self.obstacles.extend(o.split())
                     self.obstacles.remove(o)
                     continue
                 self.explosion_manager.add(self.player.pos.copy())
+                self._play_sfx("player_death", self.player.pos)
+                self._duck_loops()
+                self._stop_thrust_loop()
                 self.camera.shake(0.5, 15)
                 self.state = "gameover"
                 return
@@ -277,7 +333,12 @@ class Game:
                     self.score += o.score_value
                     self.flash_messages.append({"text": str(o.score_value), "timer": now + 1.5,
                                                 "pos": (int(o.pos[0]), int(o.pos[1])), "font_size": 25})
-                    if o.explode: self.explosion_manager.add(o.pos.copy())
+                    if o.explode:
+                        self.explosion_manager.add(o.pos.copy())
+                        self._play_sfx("explosion", o.pos)
+                        self._duck_loops()
+                    else:
+                        self._play_sfx("hit", o.pos)
                     if hasattr(o, "split"): self.obstacles.extend(o.split())
                     self.obstacles.remove(o)
                     if p in self.emitter.particles:
@@ -289,7 +350,12 @@ class Game:
             for pt in self.player.trail[::5]:
                 if np.linalg.norm(np.array(pt) - o.pos) < o.radius:
                     self.score += 25
-                    if o.explode: self.explosion_manager.add(o.pos.copy())
+                    if o.explode:
+                        self.explosion_manager.add(o.pos.copy())
+                        self._play_sfx("explosion", o.pos)
+                        self._duck_loops()
+                    else:
+                        self._play_sfx("hit", o.pos)
                     if hasattr(o, "split"): self.obstacles.extend(o.split())
                     self.obstacles.remove(o)
                     break
@@ -310,35 +376,47 @@ class Game:
                 txt = getattr(pu, "effect", pu.__class__.__name__)
                 self.flash_messages.append({"text": txt, "timer": now + 2,
                                             "pos": (WIDTH // 2, HEIGHT // 2), "font_size": 50})
+                event_name = None
 
                 if isinstance(pu, PowerUp):
                     # Instant refuel & cooldown clear
                     self.player.fuel = self.player.max_fuel
                     self.player.emitting_cooldown = False
                     self.player.cooldown_timer = 0
+                    event_name = "special_pickup"
 
                 elif hasattr(pu, "effect"):
                     eff = pu.effect
                     if eff == "immunity":
                         self.player.immune = True; self.player.immune_timer = now + pu.duration
+                        event_name = "pickup_immunity"
                     elif eff == "tail_boost":
                         self.player.tail_multiplier = 2; self.player.tail_boost_timer = now + pu.duration
                         self.score += self.score * pu.score_bonus_factor
+                        event_name = "pickup_tail_boost"
                     elif eff == "shield":
                         self.player.shield_active = True; self.player.shield_timer = now + pu.duration
+                        event_name = "pickup_shield"
                     elif eff == "slow_motion":
                         self.slow_multiplier = 0.5; self.slow_timer = now + pu.duration
                         self.player.slow_motion_active = True
+                        event_name = "pickup_slow_motion"
                     elif eff == "score_multiplier":
                         self.player.score_multiplier = pu.multiplier; self.player.score_multiplier_timer = now + pu.duration
+                        event_name = "pickup_score_multiplier"
                     elif eff == "magnet":
                         self.player.magnet_active = True; self.player.magnet_timer = now + pu.duration
+                        event_name = "pickup_magnet"
 
                 elif isinstance(pu, ScoreBoostPickup):
                     self.score += 100
+                    event_name = "pickup_score_boost"
                 elif isinstance(pu, SpecialPickup):
                     self.player.special_pickup = pu
+                    event_name = "special_pickup"
 
+                if event_name:
+                    self._play_sfx(event_name, pu.pos)
                 self.powerups.remove(pu)
 
         # Magnet attraction

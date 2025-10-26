@@ -7,3 +7,5 @@ pygbag.toml
 pygbag.toml
 main.spec
 game2.py
+logs/
+assets/.render_cache/

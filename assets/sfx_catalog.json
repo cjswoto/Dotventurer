@@ -1,0 +1,119 @@
+{
+  "player_thrust": {
+    "bus": "loops",
+    "loop": true,
+    "base_gain": 0.55,
+    "cooldown_ms": 40,
+    "pan": true,
+    "priority": 6,
+    "vol_jitter": 0.05,
+    "pitch_jitter_semitones": 0.08,
+    "recipe": "player_thrust_loop"
+  },
+  "hit": {
+    "bus": "sfx",
+    "base_gain": 0.9,
+    "cooldown_ms": 60,
+    "pan": true,
+    "priority": 8,
+    "variants": ["hit_primary", "hit_secondary"]
+  },
+  "explosion": {
+    "bus": "sfx",
+    "base_gain": 0.95,
+    "cooldown_ms": 120,
+    "pan": true,
+    "priority": 10,
+    "vol_jitter": 0.1,
+    "pitch_jitter_semitones": 0.12,
+    "recipe": "explosion_body"
+  },
+  "player_death": {
+    "bus": "sfx",
+    "base_gain": 0.9,
+    "cooldown_ms": 200,
+    "pan": true,
+    "priority": 11,
+    "recipe": "player_death_bloom"
+  },
+  "special_pickup": {
+    "bus": "sfx",
+    "base_gain": 0.8,
+    "cooldown_ms": 120,
+    "pan": true,
+    "priority": 5,
+    "recipe": "pickup_arpeggio"
+  },
+  "special_activate": {
+    "bus": "sfx",
+    "base_gain": 0.95,
+    "cooldown_ms": 200,
+    "pan": true,
+    "priority": 12,
+    "recipe": "special_activate_whoosh"
+  },
+  "pickup_immunity": {
+    "bus": "sfx",
+    "base_gain": 0.75,
+    "cooldown_ms": 160,
+    "pan": true,
+    "priority": 4,
+    "recipe": "pickup_immunity_twinkle"
+  },
+  "pickup_shield": {
+    "bus": "sfx",
+    "base_gain": 0.78,
+    "cooldown_ms": 160,
+    "pan": true,
+    "priority": 4,
+    "recipe": "pickup_shield_gliss"
+  },
+  "pickup_tail_boost": {
+    "bus": "sfx",
+    "base_gain": 0.82,
+    "cooldown_ms": 160,
+    "pan": true,
+    "priority": 4,
+    "recipe": "pickup_arpeggio"
+  },
+  "pickup_slow_motion": {
+    "bus": "sfx",
+    "base_gain": 0.85,
+    "cooldown_ms": 200,
+    "pan": true,
+    "priority": 5,
+    "recipe": "pickup_slow_motion_warp"
+  },
+  "pickup_score_multiplier": {
+    "bus": "sfx",
+    "base_gain": 0.78,
+    "cooldown_ms": 180,
+    "pan": true,
+    "priority": 4,
+    "recipe": "pickup_arpeggio"
+  },
+  "pickup_magnet": {
+    "bus": "sfx",
+    "base_gain": 0.72,
+    "cooldown_ms": 150,
+    "pan": true,
+    "priority": 4,
+    "recipe": "pickup_magnet_pull"
+  },
+  "pickup_score_boost": {
+    "bus": "sfx",
+    "base_gain": 0.78,
+    "cooldown_ms": 160,
+    "pan": true,
+    "priority": 4,
+    "recipe": "pickup_arpeggio"
+  },
+  "ui_click": {
+    "bus": "ui",
+    "base_gain": 0.8,
+    "cooldown_ms": 120,
+    "pan": false,
+    "priority": 3,
+    "recipe": "ui_click_soft"
+  }
+}

@@ -1,6 +1,19 @@
 # config.py
 # All configurable constants and settings
 
+import os
+
+# Optional debug logging toggle – when enabled, each major function guarded by
+# the LOG_ENABLED flag emits a timestamped trace to logs/debug.txt. Disabled by
+# default for normal play sessions.
+LOG_ENABLED = bool(int(os.getenv("DOTVENTURER_LOG_ENABLED", "0")))
+LOG_FILE_PATH = "logs/debug.txt"
+
+# Central audio toggle so the new procedural SFX system can be disabled without
+# removing integration code. This mirrors the requested AUDIO_ENABLED backout
+# flag.
+AUDIO_ENABLED = bool(int(os.getenv("DOTVENTURER_AUDIO_ENABLED", "1")))
+
 # Window dimensions (increased 25%: 800×600 → 1000×750)
 WIDTH = 1920
 HEIGHT = 1080
