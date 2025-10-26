@@ -8,6 +8,9 @@ HEIGHT = 1080
 # Frames per second
 FPS = 60
 
+# Optional debug logging toggle
+LOG_ENABLED = False
+
 # Movement & Physics Settings
 ACCELERATION = 600.0       # Force multiplier when moving via mouse
 FRICTION = 0.97           # Damping factor applied each frame

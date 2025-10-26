@@ -20,6 +20,7 @@ from config import (
     settings_data, FUEL_CONSUMPTION_RATE,
     FUEL_RECHARGE_RATE, COOLDOWN_DURATION
 )
+from audio import SFX
 from entities import (
     Player, Obstacle, PowerUp, ImmunityPickup,
     ScoreBoostPickup, BoostPickup, SpecialPickup,
@@ -66,6 +67,7 @@ class Game:
         info = pygame.display.Info()
         self.window = pygame.display.set_mode((info.current_w, info.current_h))
         self.clock = pygame.time.Clock()
+        self.sfx = SFX()
 
         # core state
         self.state = "menu"
@@ -86,6 +88,7 @@ class Game:
         self.flash_messages = []
         self.score = 0
         self.slow_multiplier = 1
+        self.audio_debug = False
 
         # UI buttons
         self.menu_buttons = [
@@ -112,6 +115,43 @@ class Game:
         except Exception:
             return {"title": "About", "objects": [], "instructions": ["No about data available."]}
 
+    def _play_event(self, event, pos=None):
+        pos_tuple = None
+        if pos is not None:
+            arr = np.array(pos, dtype=float)
+            pos_tuple = (float(arr[0]), float(arr[1]))
+        self.sfx.play(event, pos=pos_tuple, screen_size=(WIDTH, HEIGHT))
+
+    def _trigger_explosion(self, pos):
+        pos_array = np.array(pos, dtype=float)
+        self.explosion_manager.add(pos_array.copy())
+        self._play_event("explosion", pos_array)
+        self.sfx.duck("loops", -6.0, 250)
+
+    def _update_thrust_audio(self, emitting):
+        if emitting:
+            self.sfx.play_loop("player_thrust", pos=self.player.pos, screen_size=(WIDTH, HEIGHT))
+        else:
+            self.sfx.stop_loop("player_thrust")
+
+    def _stop_thrust_loop(self):
+        self.sfx.stop_loop("player_thrust")
+
+    def _draw_audio_debug(self, surf):
+        if not self.audio_debug:
+            return
+        snapshot = self.sfx.get_debug_snapshot()
+        font = pygame.font.SysFont("Arial", 16)
+        y = 10
+        for bus, data in snapshot["buses"].items():
+            txt = font.render(f"{bus}: {data['voices']} ({data['virtual']} virtual)", True, (255, 255, 0))
+            surf.blit(txt, (10, y))
+            y += 18
+        events = ", ".join(snapshot["events"])
+        if events:
+            txt = font.render(f"Last: {events}", True, (200, 200, 200))
+            surf.blit(txt, (10, y))
+
     # ──────────────────────────────────────────────────────
     # Spawning helpers
     def spawn_obstacle(self):
@@ -135,6 +175,7 @@ class Game:
         self.camera = Camera()
         self.flash_messages = []
         self.slow_multiplier = 1
+        self._stop_thrust_loop()
 
     # ──────────────────────────────────────────────────────
     # Event handling
@@ -145,6 +186,7 @@ class Game:
             if self.state == "menu":
                 for b in self.menu_buttons:
                     if b.is_hovered(pos):
+                        self._play_event("ui_click")
                         if   b.text == "Start Game":    self.reset(); self.state = "playing"
                         elif b.text == "Settings":      self.state = "settings"
                         elif b.text == "Score Board":   self.state = "scoreboard"
@@ -158,17 +200,24 @@ class Game:
                     plus  = pygame.Rect(WIDTH/2+90, y, 30, 30)
                     if minus.collidepoint(pos):
                         settings_data[key] = clamp(settings_data[key] - self.settings_steps[key], 0, 1e9)
+                        self._play_event("ui_click")
                     elif plus.collidepoint(pos):
                         settings_data[key] += self.settings_steps[key]
+                        self._play_event("ui_click")
                 if self.settings_back_button.is_hovered(pos):
+                    self._play_event("ui_click")
                     self.state = "menu"
+                    self._stop_thrust_loop()
 
             elif self.state in ("scoreboard", "about"):
                 if self.back_button.is_hovered(pos):
+                    self._play_event("ui_click")
                     self.state = "menu"
+                    self._stop_thrust_loop()
 
             elif self.state == "gameover":
                 if self.restart_button.is_hovered(pos):
+                    self._play_event("ui_click")
                     self.leaderboard.add_score(self.score)
                     self.reset(); self.state = "playing"
 
@@ -178,10 +227,16 @@ class Game:
 
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE and self.state == "playing":
+                self._play_event("ui_click")
                 self.state = "menu"
+                self._stop_thrust_loop()
+            elif event.key == pygame.K_F9:
+                self.audio_debug = not self.audio_debug
             elif self.state == "menu" and event.key == pygame.K_SPACE:
+                self._play_event("ui_click")
                 self.reset(); self.state = "playing"
             elif self.state == "gameover" and event.key == pygame.K_r:
+                self._play_event("ui_click")
                 self.leaderboard.add_score(self.score)
                 self.reset(); self.state = "playing"
 
@@ -190,9 +245,10 @@ class Game:
     def _activate_special(self):
         bonus = sum(o.score_value for o in self.obstacles)
         for o in self.obstacles:
-            self.explosion_manager.add(o.pos.copy())
+            self._trigger_explosion(o.pos)
         self.obstacles.clear()
         self.score += bonus
+        self._play_event("special_activate", self.player.pos)
         self.player.special_active = True
         self.player.special_timer  = 3
         self.player.special_pickup = None
@@ -215,6 +271,7 @@ class Game:
     # ──────────────────────────────────────────────────────
     # Update loop
     def update(self, dt):
+        self.sfx.update(dt)
         if self.state != "playing":
             self.flash_messages = [f for f in self.flash_messages if time.time() < f["timer"]]
             return
@@ -249,6 +306,7 @@ class Game:
 
         self.emitter.pos = self.player.pos.copy()
         self.emitter.update(dt, emitting)
+        self._update_thrust_audio(emitting)
 
         # Obstacle movement
         for o in self.obstacles:
@@ -261,13 +319,16 @@ class Game:
                     continue
                 if self.player.shield_active:
                     self.player.shield_active = False
-                    self.explosion_manager.add(o.pos.copy())
+                    self._trigger_explosion(o.pos)
+                    self._play_event("hit", o.pos)
                     if hasattr(o, "split"): self.obstacles.extend(o.split())
                     self.obstacles.remove(o)
                     continue
-                self.explosion_manager.add(self.player.pos.copy())
+                self._trigger_explosion(self.player.pos)
                 self.camera.shake(0.5, 15)
                 self.state = "gameover"
+                self._play_event("player_death", self.player.pos)
+                self._stop_thrust_loop()
                 return
 
         # Particles vs obstacle
@@ -277,7 +338,8 @@ class Game:
                     self.score += o.score_value
                     self.flash_messages.append({"text": str(o.score_value), "timer": now + 1.5,
                                                 "pos": (int(o.pos[0]), int(o.pos[1])), "font_size": 25})
-                    if o.explode: self.explosion_manager.add(o.pos.copy())
+                    self._play_event("hit", o.pos)
+                    if o.explode: self._trigger_explosion(o.pos)
                     if hasattr(o, "split"): self.obstacles.extend(o.split())
                     self.obstacles.remove(o)
                     if p in self.emitter.particles:
@@ -289,7 +351,8 @@ class Game:
             for pt in self.player.trail[::5]:
                 if np.linalg.norm(np.array(pt) - o.pos) < o.radius:
                     self.score += 25
-                    if o.explode: self.explosion_manager.add(o.pos.copy())
+                    self._play_event("hit", o.pos)
+                    if o.explode: self._trigger_explosion(o.pos)
                     if hasattr(o, "split"): self.obstacles.extend(o.split())
                     self.obstacles.remove(o)
                     break
@@ -310,34 +373,47 @@ class Game:
                 txt = getattr(pu, "effect", pu.__class__.__name__)
                 self.flash_messages.append({"text": txt, "timer": now + 2,
                                             "pos": (WIDTH // 2, HEIGHT // 2), "font_size": 50})
+                pickup_event = None
 
                 if isinstance(pu, PowerUp):
                     # Instant refuel & cooldown clear
                     self.player.fuel = self.player.max_fuel
                     self.player.emitting_cooldown = False
                     self.player.cooldown_timer = 0
+                    pickup_event = "pickup_refuel"
 
                 elif hasattr(pu, "effect"):
                     eff = pu.effect
                     if eff == "immunity":
                         self.player.immune = True; self.player.immune_timer = now + pu.duration
+                        pickup_event = "pickup_immunity"
                     elif eff == "tail_boost":
                         self.player.tail_multiplier = 2; self.player.tail_boost_timer = now + pu.duration
                         self.score += self.score * pu.score_bonus_factor
+                        pickup_event = "pickup_tail_boost"
                     elif eff == "shield":
                         self.player.shield_active = True; self.player.shield_timer = now + pu.duration
+                        pickup_event = "pickup_shield"
                     elif eff == "slow_motion":
                         self.slow_multiplier = 0.5; self.slow_timer = now + pu.duration
                         self.player.slow_motion_active = True
+                        pickup_event = "pickup_slow_motion"
                     elif eff == "score_multiplier":
                         self.player.score_multiplier = pu.multiplier; self.player.score_multiplier_timer = now + pu.duration
+                        pickup_event = "pickup_score_multiplier"
                     elif eff == "magnet":
                         self.player.magnet_active = True; self.player.magnet_timer = now + pu.duration
+                        pickup_event = "pickup_magnet"
 
                 elif isinstance(pu, ScoreBoostPickup):
                     self.score += 100
+                    pickup_event = "pickup_score_boost"
                 elif isinstance(pu, SpecialPickup):
                     self.player.special_pickup = pu
+                    pickup_event = "special_pickup"
+
+                if pickup_event:
+                    self._play_event(pickup_event, pu.pos)
 
                 self.powerups.remove(pu)
 
@@ -530,6 +606,8 @@ class Game:
                 txt = pygame.font.SysFont("Arial", f["font_size"]).render(f["text"], True, (255, 255, 0))
                 surf.blit(txt, (f["pos"][0] - txt.get_width() // 2,
                                 f["pos"][1] - txt.get_height() // 2))
+
+        self._draw_audio_debug(surf)
 
     # ──────────────────────────────────────────────────────
     # Main loop
