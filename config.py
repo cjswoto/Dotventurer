@@ -5,6 +5,10 @@
 WIDTH = 1920
 HEIGHT = 1080
 
+# Logging
+LOG_ENABLED = False
+LOG_FILE = "logs/debug.txt"
+
 # Frames per second
 FPS = 60
 
