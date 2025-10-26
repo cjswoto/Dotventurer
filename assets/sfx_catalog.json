@@ -1,0 +1,138 @@
+{
+  "player_thrust": {
+    "bus": "loops",
+    "loop": true,
+    "base_gain": -6.0,
+    "cooldown_ms": 50,
+    "pan": true,
+    "priority": 70,
+    "vol_jitter": 0.04,
+    "pitch_jitter_semitones": 0.1
+  },
+  "hit": {
+    "bus": "sfx",
+    "base_gain": -4.0,
+    "cooldown_ms": 60,
+    "pan": true,
+    "priority": 60,
+    "vol_jitter": 0.06,
+    "pitch_jitter_semitones": 0.2
+  },
+  "explosion": {
+    "bus": "sfx",
+    "base_gain": -2.0,
+    "cooldown_ms": 120,
+    "pan": true,
+    "priority": 90,
+    "vol_jitter": 0.08,
+    "pitch_jitter_semitones": 0.35
+  },
+  "player_death": {
+    "bus": "sfx",
+    "base_gain": -3.0,
+    "cooldown_ms": 300,
+    "pan": true,
+    "priority": 95,
+    "vol_jitter": 0.05,
+    "pitch_jitter_semitones": 0.2
+  },
+  "special_pickup": {
+    "bus": "sfx",
+    "base_gain": -6.0,
+    "cooldown_ms": 150,
+    "pan": true,
+    "priority": 65,
+    "vol_jitter": 0.07,
+    "pitch_jitter_semitones": 0.25
+  },
+  "special_activate": {
+    "bus": "sfx",
+    "base_gain": -4.0,
+    "cooldown_ms": 300,
+    "pan": true,
+    "priority": 95,
+    "vol_jitter": 0.04,
+    "pitch_jitter_semitones": 0.2
+  },
+  "pickup_immunity": {
+    "bus": "sfx",
+    "base_gain": -7.0,
+    "cooldown_ms": 180,
+    "pan": true,
+    "priority": 55,
+    "vol_jitter": 0.05,
+    "pitch_jitter_semitones": 0.15
+  },
+  "pickup_shield": {
+    "bus": "sfx",
+    "base_gain": -7.0,
+    "cooldown_ms": 180,
+    "pan": true,
+    "priority": 55,
+    "vol_jitter": 0.05,
+    "pitch_jitter_semitones": 0.15
+  },
+  "pickup_tail_boost": {
+    "bus": "sfx",
+    "base_gain": -6.0,
+    "cooldown_ms": 180,
+    "pan": true,
+    "priority": 55,
+    "vol_jitter": 0.05,
+    "pitch_jitter_semitones": 0.2
+  },
+  "pickup_slow_motion": {
+    "bus": "sfx",
+    "base_gain": -8.0,
+    "cooldown_ms": 200,
+    "pan": true,
+    "priority": 55,
+    "vol_jitter": 0.05,
+    "pitch_jitter_semitones": 0.2
+  },
+  "pickup_score_multiplier": {
+    "bus": "sfx",
+    "base_gain": -5.0,
+    "cooldown_ms": 200,
+    "pan": true,
+    "priority": 60,
+    "vol_jitter": 0.05,
+    "pitch_jitter_semitones": 0.2
+  },
+  "pickup_magnet": {
+    "bus": "sfx",
+    "base_gain": -6.0,
+    "cooldown_ms": 200,
+    "pan": true,
+    "priority": 60,
+    "vol_jitter": 0.05,
+    "pitch_jitter_semitones": 0.2
+  },
+  "pickup_score_boost": {
+    "bus": "sfx",
+    "base_gain": -6.0,
+    "cooldown_ms": 150,
+    "pan": true,
+    "priority": 55,
+    "vol_jitter": 0.05,
+    "pitch_jitter_semitones": 0.2
+  },
+  "pickup_refuel": {
+    "bus": "sfx",
+    "base_gain": -6.0,
+    "cooldown_ms": 150,
+    "pan": true,
+    "priority": 55,
+    "vol_jitter": 0.05,
+    "pitch_jitter_semitones": 0.2
+  },
+  "ui_click": {
+    "bus": "ui",
+    "base_gain": -3.0,
+    "cooldown_ms": 80,
+    "pan": false,
+    "priority": 40,
+    "vol_jitter": 0.03,
+    "pitch_jitter_semitones": 0.1
+  }
+}
