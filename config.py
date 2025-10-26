@@ -27,6 +27,11 @@ WORLD_SCALE = 10
 WORLD_WIDTH = WIDTH * WORLD_SCALE
 WORLD_HEIGHT = HEIGHT * WORLD_SCALE
 
+# Audio & logging toggles
+AUDIO_ENABLED = True
+LOG_ENABLED = False
+LOG_FILE = "logs/debug.txt"
+
 # Settings dictionary for UI editing
 settings_data = {
     "FPS": FPS,
