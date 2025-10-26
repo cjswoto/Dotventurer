@@ -1,0 +1,90 @@
+{
+  "player_thrust": {
+    "bus": "loops",
+    "loop": true,
+    "cooldown_ms": 0,
+    "pan": true,
+    "base_gain": 0.8,
+    "priority": 5,
+    "vol_jitter": 0.05,
+    "pitch_jitter_semitones": 0.02,
+    "recipe": "player_thrust"
+  },
+  "hit": {
+    "bus": "sfx",
+    "pan": true,
+    "priority": 6,
+    "vol_jitter": 0.12,
+    "pitch_jitter_semitones": 0.04,
+    "variants": ["hit", "pickup_score_boost"]
+  },
+  "explosion": {
+    "bus": "sfx",
+    "pan": true,
+    "priority": 10,
+    "cooldown_ms": 120,
+    "vol_jitter": 0.15,
+    "pitch_jitter_semitones": 0.05,
+    "recipe": "explosion"
+  },
+  "player_death": {
+    "bus": "sfx",
+    "pan": true,
+    "priority": 12,
+    "cooldown_ms": 500,
+    "recipe": "player_death"
+  },
+  "special_pickup": {
+    "bus": "sfx",
+    "priority": 4,
+    "recipe": "special_pickup"
+  },
+  "special_activate": {
+    "bus": "sfx",
+    "priority": 11,
+    "pan": true,
+    "cooldown_ms": 400,
+    "recipe": "special_activate"
+  },
+  "pickup_immunity": {
+    "bus": "sfx",
+    "priority": 4,
+    "recipe": "pickup_immunity"
+  },
+  "pickup_shield": {
+    "bus": "sfx",
+    "priority": 4,
+    "recipe": "pickup_shield"
+  },
+  "pickup_tail_boost": {
+    "bus": "sfx",
+    "priority": 4,
+    "recipe": "pickup_tail_boost"
+  },
+  "pickup_slow_motion": {
+    "bus": "sfx",
+    "priority": 4,
+    "recipe": "pickup_slow_motion"
+  },
+  "pickup_score_multiplier": {
+    "bus": "sfx",
+    "priority": 4,
+    "recipe": "pickup_score_multiplier"
+  },
+  "pickup_magnet": {
+    "bus": "sfx",
+    "priority": 4,
+    "recipe": "pickup_magnet"
+  },
+  "pickup_score_boost": {
+    "bus": "sfx",
+    "priority": 4,
+    "recipe": "pickup_score_boost"
+  },
+  "ui_click": {
+    "bus": "ui",
+    "priority": 2,
+    "cooldown_ms": 80,
+    "recipe": "ui_click"
+  }
+}

@@ -1,6 +1,8 @@
 # config.py
 # All configurable constants and settings
 
+import os
+
 # Window dimensions (increased 25%: 800×600 → 1000×750)
 WIDTH = 1920
 HEIGHT = 1080
@@ -39,3 +41,8 @@ settings_data = {
     "EMITTER_CONE_ANGLE": EMITTER_CONE_ANGLE,
     "PARTICLE_RATE": PARTICLE_RATE
 }
+
+
+# Audio configuration
+AUDIO_ENABLED = os.getenv("AUDIO_ENABLED", "1") not in {"0", "false", "False"}
+AUDIO_LOG_ENABLED = os.getenv("AUDIO_LOG_ENABLED", "0") in {"1", "true", "True"}

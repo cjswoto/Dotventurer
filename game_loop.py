@@ -1,7 +1,8 @@
 # game_loop.py
 
 import pygame
-from config import WIDTH, HEIGHT, settings_data
+from audio import SFX
+from config import AUDIO_ENABLED, WIDTH, HEIGHT, settings_data
 from game import Game
 
 def process_events(game, x_offset, y_offset):
@@ -30,7 +31,8 @@ def run_game():
     info = pygame.display.Info()
     screen = pygame.display.set_mode((info.current_w, info.current_h))
     game_surface = pygame.Surface((WIDTH, HEIGHT))
-    game = Game()
+    sfx = SFX(enable_audio=AUDIO_ENABLED)
+    game = Game(sfx=sfx)
     running = True
 
     while running:
@@ -44,6 +46,7 @@ def run_game():
 
         running, _ = process_events(game, x_off, y_off)
         update_game(game, dt)
+        sfx.update(dt)
         render_game(game, screen, game_surface, x_off, y_off)
 
     pygame.quit()
