@@ -1,6 +1,8 @@
 # config.py
 # All configurable constants and settings
 
+import os
+
 # Window dimensions (increased 25%: 800×600 → 1000×750)
 WIDTH = 1920
 HEIGHT = 1080
@@ -39,3 +41,7 @@ settings_data = {
     "EMITTER_CONE_ANGLE": EMITTER_CONE_ANGLE,
     "PARTICLE_RATE": PARTICLE_RATE
 }
+
+# Optional debug logging toggle
+LOG_ENABLED = os.getenv("DOTVENTURER_LOG_ENABLED", "0") == "1"
+LOG_FILE_PATH = os.getenv("DOTVENTURER_LOG_FILE", "logs/debug.txt")
