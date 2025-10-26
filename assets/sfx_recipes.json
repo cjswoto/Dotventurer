@@ -1,0 +1,311 @@
+{
+  "player_thrust_loop": {
+    "duration_ms": 520,
+    "loop": true,
+    "loop_length_ms": 480,
+    "headroom_db": -6.0,
+    "layers": [
+      {
+        "type": "noise",
+        "lp_hz": 1800,
+        "amp": 0.35,
+        "env": {"attack_ms": 10, "decay_ms": 80, "sustain": 0.6, "release_ms": 80},
+        "randomize": {"amp_pct": 0.05}
+      },
+      {
+        "type": "triangle",
+        "freq_hz": 520,
+        "amp": 0.15,
+        "env": {"attack_ms": 12, "decay_ms": 140, "sustain": 0.4, "release_ms": 120},
+        "randomize": {"pitch_semitones": 0.2, "amp_pct": 0.08}
+      }
+    ]
+  },
+  "hit_a": {
+    "duration_ms": 260,
+    "headroom_db": -6.0,
+    "layers": [
+      {
+        "type": "noise",
+        "lp_hz": 4200,
+        "amp": 0.5,
+        "env": {"attack_ms": 5, "decay_ms": 90, "sustain": 0.2, "release_ms": 80},
+        "randomize": {"amp_pct": 0.15, "start_ms": 4}
+      },
+      {
+        "type": "sine",
+        "freq_hz": 220,
+        "amp": 0.25,
+        "env": {"attack_ms": 6, "decay_ms": 140, "sustain": 0.0, "release_ms": 90},
+        "pitch_glide": [0, -5],
+        "randomize": {"pitch_semitones": 0.4}
+      }
+    ]
+  },
+  "hit_b": {
+    "extends": "hit_a",
+    "layers": [
+      {
+        "type": "noise",
+        "lp_hz": 3600,
+        "amp": 0.45,
+        "env": {"attack_ms": 7, "decay_ms": 120, "sustain": 0.2, "release_ms": 100},
+        "randomize": {"amp_pct": 0.18, "start_ms": 6}
+      },
+      {
+        "type": "triangle",
+        "freq_hz": 310,
+        "amp": 0.22,
+        "env": {"attack_ms": 5, "decay_ms": 110, "sustain": 0.0, "release_ms": 100},
+        "pitch_glide": [1, -7],
+        "randomize": {"pitch_semitones": 0.5}
+      }
+    ]
+  },
+  "hit_c": {
+    "extends": "hit_a",
+    "layers": [
+      {
+        "type": "noise",
+        "lp_hz": 3200,
+        "amp": 0.48,
+        "env": {"attack_ms": 5, "decay_ms": 100, "sustain": 0.15, "release_ms": 90},
+        "randomize": {"amp_pct": 0.15, "start_ms": 5}
+      },
+      {
+        "type": "square",
+        "freq_hz": 180,
+        "amp": 0.2,
+        "env": {"attack_ms": 6, "decay_ms": 120, "sustain": 0.0, "release_ms": 90},
+        "pitch_glide": [0, -4],
+        "randomize": {"pitch_semitones": 0.5}
+      }
+    ]
+  },
+  "explosion_main": {
+    "duration_ms": 680,
+    "headroom_db": -6.0,
+    "layers": [
+      {
+        "type": "noise",
+        "lp_hz": 2200,
+        "amp": 0.55,
+        "env": {"attack_ms": 8, "decay_ms": 200, "sustain": 0.0, "release_ms": 160},
+        "randomize": {"amp_pct": 0.2, "start_ms": 10}
+      },
+      {
+        "type": "sine",
+        "freq_hz": 120,
+        "amp": 0.3,
+        "env": {"attack_ms": 6, "decay_ms": 260, "sustain": 0.1, "release_ms": 200},
+        "pitch_glide": [0, -7],
+        "randomize": {"pitch_semitones": 0.5}
+      }
+    ]
+  },
+  "player_death": {
+    "duration_ms": 900,
+    "headroom_db": -6.0,
+    "layers": [
+      {
+        "type": "sine",
+        "freq_hz": 140,
+        "amp": 0.3,
+        "env": {"attack_ms": 10, "decay_ms": 320, "sustain": 0.0, "release_ms": 260},
+        "pitch_glide": [0, -12]
+      },
+      {
+        "type": "noise",
+        "lp_hz": 1600,
+        "amp": 0.4,
+        "env": {"attack_ms": 20, "decay_ms": 260, "sustain": 0.0, "release_ms": 260},
+        "randomize": {"amp_pct": 0.15}
+      }
+    ]
+  },
+  "special_pickup": {
+    "duration_ms": 420,
+    "headroom_db": -6.0,
+    "layers": [
+      {
+        "type": "triangle",
+        "freq_hz": 760,
+        "amp": 0.22,
+        "env": {"attack_ms": 8, "decay_ms": 200, "sustain": 0.4, "release_ms": 160},
+        "randomize": {"pitch_semitones": 0.2, "amp_pct": 0.1}
+      },
+      {
+        "type": "triangle",
+        "freq_hz": 1140,
+        "amp": 0.18,
+        "env": {"attack_ms": 6, "decay_ms": 180, "sustain": 0.3, "release_ms": 150},
+        "randomize": {"pitch_semitones": 0.3, "amp_pct": 0.1}
+      }
+    ]
+  },
+  "special_activate": {
+    "duration_ms": 820,
+    "headroom_db": -6.0,
+    "layers": [
+      {
+        "type": "noise",
+        "lp_hz": 2400,
+        "amp": 0.45,
+        "env": {"attack_ms": 10, "decay_ms": 320, "sustain": 0.1, "release_ms": 260},
+        "randomize": {"amp_pct": 0.18}
+      },
+      {
+        "type": "sine",
+        "freq_hz": 90,
+        "amp": 0.32,
+        "env": {"attack_ms": 12, "decay_ms": 260, "sustain": 0.2, "release_ms": 220},
+        "randomize": {"pitch_semitones": 0.3}
+      }
+    ]
+  },
+  "pickup_immunity": {
+    "duration_ms": 360,
+    "layers": [
+      {
+        "type": "triangle",
+        "freq_hz": 820,
+        "amp": 0.25,
+        "env": {"attack_ms": 6, "decay_ms": 160, "sustain": 0.3, "release_ms": 140},
+        "randomize": {"pitch_semitones": 0.2}
+      },
+      {
+        "type": "noise",
+        "lp_hz": 5000,
+        "amp": 0.15,
+        "env": {"attack_ms": 5, "decay_ms": 120, "sustain": 0.0, "release_ms": 100},
+        "randomize": {"amp_pct": 0.1}
+      }
+    ]
+  },
+  "pickup_shield": {
+    "extends": "pickup_immunity",
+    "layers": [
+      {
+        "type": "triangle",
+        "freq_hz": 680,
+        "amp": 0.24,
+        "env": {"attack_ms": 8, "decay_ms": 160, "sustain": 0.4, "release_ms": 160}
+      },
+      {
+        "type": "noise",
+        "lp_hz": 3600,
+        "amp": 0.18,
+        "env": {"attack_ms": 5, "decay_ms": 150, "sustain": 0.1, "release_ms": 120}
+      }
+    ]
+  },
+  "pickup_tail_boost": {
+    "duration_ms": 380,
+    "layers": [
+      {
+        "type": "square",
+        "freq_hz": 540,
+        "amp": 0.22,
+        "env": {"attack_ms": 6, "decay_ms": 180, "sustain": 0.2, "release_ms": 150},
+        "randomize": {"pitch_semitones": 0.2}
+      },
+      {
+        "type": "triangle",
+        "freq_hz": 810,
+        "amp": 0.18,
+        "env": {"attack_ms": 4, "decay_ms": 150, "sustain": 0.1, "release_ms": 130}
+      }
+    ]
+  },
+  "pickup_slow_motion": {
+    "duration_ms": 520,
+    "layers": [
+      {
+        "type": "sine",
+        "freq_hz": 340,
+        "amp": 0.28,
+        "env": {"attack_ms": 12, "decay_ms": 260, "sustain": 0.3, "release_ms": 220},
+        "pitch_glide": [1, -2]
+      },
+      {
+        "type": "noise",
+        "lp_hz": 1600,
+        "amp": 0.2,
+        "env": {"attack_ms": 8, "decay_ms": 200, "sustain": 0.0, "release_ms": 180},
+        "randomize": {"amp_pct": 0.1}
+      }
+    ]
+  },
+  "pickup_score_multiplier": {
+    "duration_ms": 360,
+    "layers": [
+      {
+        "type": "sine",
+        "freq_hz": 600,
+        "amp": 0.2,
+        "env": {"attack_ms": 6, "decay_ms": 140, "sustain": 0.2, "release_ms": 140}
+      },
+      {
+        "type": "sine",
+        "freq_hz": 675,
+        "amp": 0.18,
+        "env": {"attack_ms": 6, "decay_ms": 120, "sustain": 0.2, "release_ms": 140}
+      },
+      {
+        "type": "sine",
+        "freq_hz": 900,
+        "amp": 0.18,
+        "env": {"attack_ms": 6, "decay_ms": 120, "sustain": 0.2, "release_ms": 140}
+      }
+    ]
+  },
+  "pickup_magnet": {
+    "duration_ms": 420,
+    "layers": [
+      {
+        "type": "triangle",
+        "freq_hz": 500,
+        "amp": 0.2,
+        "env": {"attack_ms": 6, "decay_ms": 150, "sustain": 0.2, "release_ms": 120},
+        "randomize": {"start_ms": 12}
+      },
+      {
+        "type": "triangle",
+        "freq_hz": 620,
+        "amp": 0.2,
+        "env": {"attack_ms": 6, "decay_ms": 150, "sustain": 0.2, "release_ms": 120},
+        "start_ms": 60,
+        "randomize": {"start_ms": 18}
+      }
+    ]
+  },
+  "pickup_score_boost": {
+    "duration_ms": 380,
+    "layers": [
+      {
+        "type": "triangle",
+        "freq_hz": 720,
+        "amp": 0.22,
+        "env": {"attack_ms": 6, "decay_ms": 150, "sustain": 0.3, "release_ms": 130}
+      },
+      {
+        "type": "sine",
+        "freq_hz": 960,
+        "amp": 0.18,
+        "env": {"attack_ms": 5, "decay_ms": 150, "sustain": 0.2, "release_ms": 120}
+      }
+    ]
+  },
+  "ui_click": {
+    "duration_ms": 180,
+    "layers": [
+      {
+        "type": "triangle",
+        "freq_hz": 880,
+        "amp": 0.3,
+        "env": {"attack_ms": 4, "decay_ms": 80, "sustain": 0.0, "release_ms": 60},
+        "randomize": {"pitch_semitones": 0.1}
+      }
+    ]
+  }
+}

@@ -1,8 +1,9 @@
 # game_loop.py
 
 import pygame
-from config import WIDTH, HEIGHT, settings_data
+from config import WIDTH, HEIGHT, settings_data, AUDIO_ENABLED
 from game import Game
+from audio import SFX
 
 def process_events(game, x_offset, y_offset):
     adjusted = (pygame.mouse.get_pos()[0] - x_offset,
@@ -14,8 +15,7 @@ def process_events(game, x_offset, y_offset):
     return True, adjusted
 
 def update_game(game, dt):
-    if game.state == "playing":
-        game.update(dt)
+    game.update(dt)
 
 def render_game(game, screen, game_surface, x_offset, y_offset):
     game_surface.fill((0,0,0))
@@ -30,7 +30,8 @@ def run_game():
     info = pygame.display.Info()
     screen = pygame.display.set_mode((info.current_w, info.current_h))
     game_surface = pygame.Surface((WIDTH, HEIGHT))
-    game = Game()
+    sfx = SFX(enable_audio=AUDIO_ENABLED)
+    game = Game(sfx=sfx)
     running = True
 
     while running:
