@@ -94,6 +94,19 @@ class Player:
         self.vel *= FRICTION
         self.pos += self.vel * dt
 
+        min_x, max_x = self.radius, WIDTH - self.radius
+        min_y, max_y = self.radius, HEIGHT - self.radius
+
+        clamped_x = max(min_x, min(self.pos[0], max_x))
+        clamped_y = max(min_y, min(self.pos[1], max_y))
+
+        if clamped_x != self.pos[0]:
+            self.pos[0] = clamped_x
+            self.vel[0] = 0
+        if clamped_y != self.pos[1]:
+            self.pos[1] = clamped_y
+            self.vel[1] = 0
+
         # trail build
         self.trail.append(tuple(self.pos))
         max_tail = 50 * self.tail_multiplier

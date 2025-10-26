@@ -84,7 +84,6 @@ class Game:
         # misc gameplay data
         self.powerups = []
         self.flash_messages = []
-        self.camera_pos = self.player.pos.copy()
         self.score = 0
         self.slow_multiplier = 1
 
@@ -134,7 +133,6 @@ class Game:
         self.score = 0
         self.explosion_manager = ExplosionManager()
         self.camera = Camera()
-        self.camera_pos = self.player.pos.copy()
         self.flash_messages = []
         self.slow_multiplier = 1
 
@@ -229,17 +227,8 @@ class Game:
         w, h = self.window.get_size()
         x_off, y_off = (w - WIDTH) // 2, (h - HEIGHT) // 2
         mx, my = clamp(mx - x_off, 0, WIDTH), clamp(my - y_off, 0, HEIGHT)
-        world_mouse = self.camera_pos + np.array([mx - WIDTH/2, my - HEIGHT/2])
+        world_mouse = np.array([mx, my], dtype=float)
         self.player.update(dt, world_mouse)
-
-        # Camera follow with dead‑zone
-        margin_x, margin_y = WIDTH / 8, HEIGHT / 8
-        center = np.array([WIDTH/2, HEIGHT/2])
-        p_screen = self.player.pos - (self.camera_pos - center)
-        if p_screen[0] < margin_x:               self.camera_pos[0] = self.player.pos[0] - margin_x + center[0]
-        elif p_screen[0] > WIDTH - margin_x:     self.camera_pos[0] = self.player.pos[0] - (WIDTH - margin_x) + center[0]
-        if p_screen[1] < margin_y:               self.camera_pos[1] = self.player.pos[1] - margin_y + center[1]
-        elif p_screen[1] > HEIGHT - margin_y:    self.camera_pos[1] = self.player.pos[1] - (HEIGHT - margin_y) + center[1]
 
         # Fuel / emitter
         left_down = pygame.mouse.get_pressed()[0]
