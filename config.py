@@ -1,6 +1,12 @@
 # config.py
 # All configurable constants and settings
 
+import os
+
+# Optional logging toggle
+LOG_ENABLED = os.getenv("DOTVENTURER_LOG_ENABLED", "0") == "1"
+LOG_FILE_PATH = os.path.join("logs", "debug.txt")
+
 # Window dimensions (increased 25%: 800×600 → 1000×750)
 WIDTH = 1920
 HEIGHT = 1080
@@ -27,6 +33,10 @@ WORLD_SCALE = 10
 WORLD_WIDTH = WIDTH * WORLD_SCALE
 WORLD_HEIGHT = HEIGHT * WORLD_SCALE
 
+# Audio defaults
+MUSIC_VOLUME = 0.6
+SFX_VOLUME = 0.7
+
 # Settings dictionary for UI editing
 settings_data = {
     "FPS": FPS,
@@ -37,5 +47,7 @@ settings_data = {
     "FRICTION": FRICTION,
     "MIN_THRUST": MIN_THRUST,
     "EMITTER_CONE_ANGLE": EMITTER_CONE_ANGLE,
-    "PARTICLE_RATE": PARTICLE_RATE
+    "PARTICLE_RATE": PARTICLE_RATE,
+    "MUSIC_VOLUME": MUSIC_VOLUME,
+    "SFX_VOLUME": SFX_VOLUME
 }

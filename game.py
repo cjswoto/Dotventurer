@@ -7,6 +7,7 @@
 # • PowerUp now instantly refuels & clears cooldown
 # ──────────────────────────────────────────────────────────────
 
+import os
 import pygame
 import numpy as np
 import random
@@ -18,7 +19,8 @@ import math
 from config import (
     WIDTH, HEIGHT,
     settings_data, FUEL_CONSUMPTION_RATE,
-    FUEL_RECHARGE_RATE, COOLDOWN_DURATION
+    FUEL_RECHARGE_RATE, COOLDOWN_DURATION,
+    LOG_ENABLED, LOG_FILE_PATH,
 )
 from entities import (
     Player, Obstacle, PowerUp, ImmunityPickup,
@@ -31,10 +33,20 @@ from entities_utils import regular_polygon, irregular_polygon
 from background import Background
 from managers import LevelManager, ExplosionManager, Camera, Timer
 from ui import Button, Leaderboard
+from audio import AudioManager
 
 
 def clamp(v, lo, hi):
     return max(lo, min(v, hi))
+
+
+def _log_game(message):
+    if not LOG_ENABLED:
+        return
+    os.makedirs(os.path.dirname(LOG_FILE_PATH), exist_ok=True)
+    timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    with open(LOG_FILE_PATH, "a", encoding="utf-8") as log_file:
+        log_file.write(f"{timestamp} game: {message}\n")
 
 
 # ──────────────────────────────────────────────────────────────
@@ -72,6 +84,10 @@ class Game:
         self.player = Player()
         self.level_manager = LevelManager()
 
+        # audio
+        self.audio_manager = AudioManager()
+        self.audio_manager.play_music()
+
         # world objects / managers
         self.obstacles = [self.spawn_obstacle() for _ in range(5)]
         self.emitter = Emitter(self.player.pos)
@@ -96,8 +112,26 @@ class Game:
             Button((WIDTH/2-100, HEIGHT/2+80, 200, 50), "About",       30),
             Button((WIDTH/2-100, HEIGHT/2+140,200, 50), "Exit",        30)
         ]
-        self.settings_keys  = ["FPS","FUEL_CONSUMPTION_RATE","FUEL_RECHARGE_RATE","COOLDOWN_DURATION"]
-        self.settings_steps = {"FPS":5,"FUEL_CONSUMPTION_RATE":5,"FUEL_RECHARGE_RATE":0.1,"COOLDOWN_DURATION":0.5}
+        self.settings_keys  = [
+            "FPS",
+            "FUEL_CONSUMPTION_RATE",
+            "FUEL_RECHARGE_RATE",
+            "COOLDOWN_DURATION",
+            "MUSIC_VOLUME",
+            "SFX_VOLUME",
+        ]
+        self.settings_steps = {
+            "FPS": 5,
+            "FUEL_CONSUMPTION_RATE": 5,
+            "FUEL_RECHARGE_RATE": 0.1,
+            "COOLDOWN_DURATION": 0.5,
+            "MUSIC_VOLUME": 0.05,
+            "SFX_VOLUME": 0.05,
+        }
+        self.settings_limits = {
+            "MUSIC_VOLUME": (0.0, 1.0),
+            "SFX_VOLUME": (0.0, 1.0),
+        }
         self.settings_back_button = Button((WIDTH/2-50, HEIGHT-80, 100, 40), "Back", 30)
         self.back_button    = Button((WIDTH/2-50, HEIGHT-80, 100, 40), "Back", 30)
         self.restart_button = Button((WIDTH/2-100,HEIGHT/2+50, 200, 50), "Restart", 30)
@@ -125,6 +159,7 @@ class Game:
         return obs
 
     def reset(self):
+        _log_game("reset")
         self.player = Player()
         self.level_manager = LevelManager()
         self.obstacles = [self.spawn_obstacle() for _ in range(5)]
@@ -137,10 +172,12 @@ class Game:
         self.camera_pos = self.player.pos.copy()
         self.flash_messages = []
         self.slow_multiplier = 1
+        self.audio_manager.apply_settings()
 
     # ──────────────────────────────────────────────────────
     # Event handling
     def handle_event(self, event, adj_mouse):
+        _log_game(f"handle_event {event.type}")
         pos = adj_mouse if adj_mouse is not None else pygame.mouse.get_pos()
 
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -154,16 +191,32 @@ class Game:
                         elif b.text == "Exit":          pygame.quit(); sys.exit()
 
             elif self.state == "settings":
+                volume_changed = False
                 for i, key in enumerate(self.settings_keys):
                     y = 100 + i * 60
                     minus = pygame.Rect(WIDTH/2+50, y, 30, 30)
                     plus  = pygame.Rect(WIDTH/2+90, y, 30, 30)
                     if minus.collidepoint(pos):
-                        settings_data[key] = clamp(settings_data[key] - self.settings_steps[key], 0, 1e9)
+                        lo, hi = self.settings_limits.get(key, (0, 1e9))
+                        new_val = clamp(settings_data[key] - self.settings_steps[key], lo, hi)
+                        if new_val != settings_data[key]:
+                            settings_data[key] = new_val
+                            if key in self.settings_limits:
+                                volume_changed = True
                     elif plus.collidepoint(pos):
-                        settings_data[key] += self.settings_steps[key]
+                        lo, hi = self.settings_limits.get(key, (0, 1e9))
+                        new_val = clamp(settings_data[key] + self.settings_steps[key], lo, hi)
+                        if new_val != settings_data[key]:
+                            settings_data[key] = new_val
+                            if key in self.settings_limits:
+                                volume_changed = True
                 if self.settings_back_button.is_hovered(pos):
                     self.state = "menu"
+                if volume_changed:
+                    for key in self.settings_limits:
+                        if key in settings_data:
+                            _log_game(f"{key}={settings_data[key]:.2f}")
+                    self.audio_manager.apply_settings()
 
             elif self.state in ("scoreboard", "about"):
                 if self.back_button.is_hovered(pos):
@@ -190,14 +243,17 @@ class Game:
     # ──────────────────────────────────────────────────────
     # Gameplay helpers
     def _activate_special(self):
+        _log_game("activate_special")
         bonus = sum(o.score_value for o in self.obstacles)
         for o in self.obstacles:
             self.explosion_manager.add(o.pos.copy())
+            self.audio_manager.play_effect("explosion")
         self.obstacles.clear()
         self.score += bonus
         self.player.special_active = True
         self.player.special_timer  = 3
         self.player.special_pickup = None
+        self.audio_manager.play_effect("special")
 
     def _expire_effects(self, now):
         if self.player.immune and now > getattr(self.player, "immune_timer", 0):
@@ -217,6 +273,7 @@ class Game:
     # ──────────────────────────────────────────────────────
     # Update loop
     def update(self, dt):
+        _log_game(f"update dt={dt:.4f}")
         if self.state != "playing":
             self.flash_messages = [f for f in self.flash_messages if time.time() < f["timer"]]
             return
@@ -273,10 +330,12 @@ class Game:
                 if self.player.shield_active:
                     self.player.shield_active = False
                     self.explosion_manager.add(o.pos.copy())
+                    self.audio_manager.play_effect("explosion")
                     if hasattr(o, "split"): self.obstacles.extend(o.split())
                     self.obstacles.remove(o)
                     continue
                 self.explosion_manager.add(self.player.pos.copy())
+                self.audio_manager.play_effect("explosion")
                 self.camera.shake(0.5, 15)
                 self.state = "gameover"
                 return
@@ -288,7 +347,9 @@ class Game:
                     self.score += o.score_value
                     self.flash_messages.append({"text": str(o.score_value), "timer": now + 1.5,
                                                 "pos": (int(o.pos[0]), int(o.pos[1])), "font_size": 25})
-                    if o.explode: self.explosion_manager.add(o.pos.copy())
+                    if o.explode:
+                        self.explosion_manager.add(o.pos.copy())
+                        self.audio_manager.play_effect("explosion")
                     if hasattr(o, "split"): self.obstacles.extend(o.split())
                     self.obstacles.remove(o)
                     if p in self.emitter.particles:
@@ -300,7 +361,9 @@ class Game:
             for pt in self.player.trail[::5]:
                 if np.linalg.norm(np.array(pt) - o.pos) < o.radius:
                     self.score += 25
-                    if o.explode: self.explosion_manager.add(o.pos.copy())
+                    if o.explode:
+                        self.explosion_manager.add(o.pos.copy())
+                        self.audio_manager.play_effect("explosion")
                     if hasattr(o, "split"): self.obstacles.extend(o.split())
                     self.obstacles.remove(o)
                     break
@@ -351,6 +414,7 @@ class Game:
                     self.player.special_pickup = pu
 
                 self.powerups.remove(pu)
+                self.audio_manager.play_effect("pickup")
 
         # Magnet attraction
         if self.player.magnet_active:
@@ -372,6 +436,7 @@ class Game:
     # ──────────────────────────────────────────────────────
     # Draw loop
     def draw(self, surf):
+        _log_game(f"draw state={self.state}")
         self.background.draw(surf)
         font20 = pygame.font.SysFont("Arial", 20)
         font30 = pygame.font.SysFont("Arial", 30)
@@ -391,7 +456,9 @@ class Game:
             surf.blit(txt, (WIDTH//2 - txt.get_width()//2, 30))
             for i, key in enumerate(self.settings_keys):
                 y = 100 + i * 60
-                val = font30.render(f"{key}: {settings_data[key]}", True, (255, 255, 255))
+                value = settings_data[key]
+                display_value = f"{value:.2f}" if isinstance(value, float) else value
+                val = font30.render(f"{key}: {display_value}", True, (255, 255, 255))
                 surf.blit(val, (WIDTH//2 - 150, y))
                 minus = pygame.Rect(WIDTH//2+50, y, 30, 30)
                 plus  = pygame.Rect(WIDTH//2+90, y, 30, 30)
