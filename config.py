@@ -1,3 +1,5 @@
+import os
+
 # config.py
 # All configurable constants and settings
 
@@ -18,6 +20,14 @@ FUEL_CONSUMPTION_RATE = 30
 FUEL_RECHARGE_RATE = 3.0
 COOLDOWN_DURATION = 10.0
 
+# Audio defaults
+SOUND_MUSIC_VOLUME = 0.5
+SOUND_SFX_VOLUME = 0.7
+
+# Logging configuration
+LOG_ENABLED = os.getenv("DOTVENTURER_LOG_ENABLED", "0") == "1"
+LOG_FILE_PATH = "logs/debug.txt"
+
 # Emitter Settings
 EMITTER_CONE_ANGLE = 30  # Total cone angle in degrees
 PARTICLE_RATE = 30       # Particles spawned per second
@@ -33,6 +43,8 @@ settings_data = {
     "FUEL_CONSUMPTION_RATE": FUEL_CONSUMPTION_RATE,
     "FUEL_RECHARGE_RATE": FUEL_RECHARGE_RATE,
     "COOLDOWN_DURATION": COOLDOWN_DURATION,
+    "SOUND_MUSIC_VOLUME": SOUND_MUSIC_VOLUME,
+    "SOUND_SFX_VOLUME": SOUND_SFX_VOLUME,
     "ACCELERATION": ACCELERATION,
     "FRICTION": FRICTION,
     "MIN_THRUST": MIN_THRUST,

@@ -31,6 +31,7 @@ from entities_utils import regular_polygon, irregular_polygon
 from background import Background
 from managers import LevelManager, ExplosionManager, Camera, Timer
 from ui import Button, Leaderboard
+from logging_utils import log_line
 
 
 def clamp(v, lo, hi):
@@ -62,6 +63,7 @@ def draw_powerup_icon(surface, pos, effect):
 # ──────────────────────────────────────────────────────────────
 class Game:
     def __init__(self):
+        log_line("Game.__init__ start")
         pygame.init()
         info = pygame.display.Info()
         self.window = pygame.display.set_mode((info.current_w, info.current_h))
@@ -96,13 +98,41 @@ class Game:
             Button((WIDTH/2-100, HEIGHT/2+80, 200, 50), "About",       30),
             Button((WIDTH/2-100, HEIGHT/2+140,200, 50), "Exit",        30)
         ]
-        self.settings_keys  = ["FPS","FUEL_CONSUMPTION_RATE","FUEL_RECHARGE_RATE","COOLDOWN_DURATION"]
-        self.settings_steps = {"FPS":5,"FUEL_CONSUMPTION_RATE":5,"FUEL_RECHARGE_RATE":0.1,"COOLDOWN_DURATION":0.5}
+        self.settings_keys  = [
+            "FPS",
+            "FUEL_CONSUMPTION_RATE",
+            "FUEL_RECHARGE_RATE",
+            "COOLDOWN_DURATION",
+            "SOUND_MUSIC_VOLUME",
+            "SOUND_SFX_VOLUME"
+        ]
+        self.settings_steps = {
+            "FPS": 5,
+            "FUEL_CONSUMPTION_RATE": 5,
+            "FUEL_RECHARGE_RATE": 0.1,
+            "COOLDOWN_DURATION": 0.5,
+            "SOUND_MUSIC_VOLUME": 0.05,
+            "SOUND_SFX_VOLUME": 0.05
+        }
+        self.settings_bounds = {
+            "SOUND_MUSIC_VOLUME": (0.0, 1.0),
+            "SOUND_SFX_VOLUME": (0.0, 1.0)
+        }
         self.settings_back_button = Button((WIDTH/2-50, HEIGHT-80, 100, 40), "Back", 30)
         self.back_button    = Button((WIDTH/2-50, HEIGHT-80, 100, 40), "Back", 30)
         self.restart_button = Button((WIDTH/2-100,HEIGHT/2+50, 200, 50), "Restart", 30)
 
         self.about_data = self._load_about()
+
+        self.music_volume = settings_data.get("SOUND_MUSIC_VOLUME", 0.5)
+        self.sfx_volume = settings_data.get("SOUND_SFX_VOLUME", 0.7)
+        self.audio_available = False
+        self.music_channel = None
+        self.sfx_channel = None
+        self.music_sound = None
+        self.sfx_sounds = {}
+        self.sample_rate = 44100
+        self._init_audio()
 
     # ──────────────────────────────────────────────────────
     # Utility loaders
@@ -112,6 +142,117 @@ class Game:
                 return json.load(f)
         except Exception:
             return {"title": "About", "objects": [], "instructions": ["No about data available."]}
+
+    def _init_audio(self):
+        log_line("Game._init_audio start")
+        try:
+            pygame.mixer.init(frequency=self.sample_rate, size=-16, channels=1)
+        except pygame.error:
+            log_line("Game._init_audio mixer_init_failed")
+            self.audio_available = False
+            return
+
+        self.audio_available = True
+        pygame.mixer.set_num_channels(8)
+        self.music_channel = pygame.mixer.Channel(0)
+        self.sfx_channel = pygame.mixer.Channel(1)
+
+        try:
+            self.music_sound = self._generate_music_track()
+            self.sfx_sounds = self._generate_sfx_bank()
+        except pygame.error:
+            log_line("Game._init_audio sound_generation_failed")
+            self.audio_available = False
+            return
+
+        self._apply_volume_settings()
+        if self.music_channel and self.music_sound:
+            self.music_channel.play(self.music_sound, loops=-1)
+
+    def _synthesize_wave(self, frequencies, duration, fade_out=0.0):
+        log_line("Game._synthesize_wave")
+        samples = int(self.sample_rate * duration)
+        if samples <= 0:
+            return np.zeros(1, dtype=np.float32)
+        t = np.linspace(0, duration, samples, False)
+        wave = np.zeros(samples, dtype=np.float32)
+        for freq, amplitude in frequencies:
+            wave += amplitude * np.sin(2 * math.pi * freq * t)
+        max_val = np.max(np.abs(wave))
+        if max_val > 0:
+            wave /= max_val
+        if fade_out > 0:
+            fade_samples = min(samples, int(self.sample_rate * fade_out))
+            envelope = np.linspace(1, 0, fade_samples, dtype=np.float32)
+            wave[-fade_samples:] *= envelope
+        return wave
+
+    def _wave_to_sound(self, wave):
+        log_line("Game._wave_to_sound")
+        normalized = wave
+        max_val = np.max(np.abs(normalized))
+        if max_val > 0:
+            normalized = normalized / max_val
+        audio = np.ascontiguousarray((normalized * 32767).astype(np.int16))
+        return pygame.sndarray.make_sound(audio)
+
+    def _generate_music_track(self):
+        log_line("Game._generate_music_track")
+        motif = np.concatenate([
+            self._synthesize_wave([(196, 0.7), (392, 0.3)], 1.0, fade_out=0.2),
+            self._synthesize_wave([(246, 0.7), (493, 0.3)], 1.0, fade_out=0.2),
+            self._synthesize_wave([(220, 0.7), (440, 0.3)], 1.0, fade_out=0.2),
+            self._synthesize_wave([(262, 0.7), (523, 0.3)], 1.0, fade_out=0.3)
+        ])
+        loop = np.tile(motif, 2)
+        return self._wave_to_sound(loop)
+
+    def _generate_sfx_bank(self):
+        log_line("Game._generate_sfx_bank")
+        return {
+            "explosion": self._wave_to_sound(
+                self._synthesize_wave([(90, 1.0), (45, 0.8), (30, 0.5)], 0.5, fade_out=0.4)
+            ),
+            "pickup": self._wave_to_sound(
+                self._synthesize_wave([(660, 0.8), (880, 0.6), (1320, 0.3)], 0.25, fade_out=0.1)
+            ),
+            "special": self._wave_to_sound(
+                self._synthesize_wave([(520, 0.7), (780, 0.4)], 0.4, fade_out=0.2)
+            ),
+            "gameover": self._wave_to_sound(
+                self._synthesize_wave([(180, 0.8), (120, 0.6)], 0.6, fade_out=0.4)
+            )
+        }
+
+    def _apply_volume_settings(self):
+        log_line("Game._apply_volume_settings")
+        self.music_volume = settings_data.get("SOUND_MUSIC_VOLUME", self.music_volume)
+        self.sfx_volume = settings_data.get("SOUND_SFX_VOLUME", self.sfx_volume)
+        if not self.audio_available:
+            return
+        if self.music_channel and self.music_sound:
+            self.music_channel.set_volume(self.music_volume)
+        for sound in self.sfx_sounds.values():
+            sound.set_volume(self.sfx_volume)
+
+    def _play_sfx(self, key):
+        log_line(f"Game._play_sfx {key}")
+        if not self.audio_available:
+            return
+        sound = self.sfx_sounds.get(key)
+        if not sound:
+            return
+        sound.set_volume(self.sfx_volume)
+        channel = pygame.mixer.find_channel()
+        if channel:
+            channel.play(sound)
+        elif self.sfx_channel:
+            self.sfx_channel.play(sound)
+
+    def _add_explosion(self, pos):
+        log_line("Game._add_explosion")
+        self.explosion_manager.add(pos)
+        self._play_sfx("explosion")
 
     # ──────────────────────────────────────────────────────
     # Spawning helpers
@@ -159,9 +300,15 @@ class Game:
                     minus = pygame.Rect(WIDTH/2+50, y, 30, 30)
                     plus  = pygame.Rect(WIDTH/2+90, y, 30, 30)
                     if minus.collidepoint(pos):
-                        settings_data[key] = clamp(settings_data[key] - self.settings_steps[key], 0, 1e9)
+                        lo, hi = self.settings_bounds.get(key, (0, 1e9))
+                        settings_data[key] = clamp(settings_data[key] - self.settings_steps[key], lo, hi)
+                        if key in self.settings_bounds:
+                            self._apply_volume_settings()
                     elif plus.collidepoint(pos):
-                        settings_data[key] += self.settings_steps[key]
+                        lo, hi = self.settings_bounds.get(key, (0, 1e9))
+                        settings_data[key] = clamp(settings_data[key] + self.settings_steps[key], lo, hi)
+                        if key in self.settings_bounds:
+                            self._apply_volume_settings()
                 if self.settings_back_button.is_hovered(pos):
                     self.state = "menu"
 
@@ -192,12 +339,13 @@ class Game:
     def _activate_special(self):
         bonus = sum(o.score_value for o in self.obstacles)
         for o in self.obstacles:
-            self.explosion_manager.add(o.pos.copy())
+            self._add_explosion(o.pos.copy())
         self.obstacles.clear()
         self.score += bonus
         self.player.special_active = True
         self.player.special_timer  = 3
         self.player.special_pickup = None
+        self._play_sfx("special")
 
     def _expire_effects(self, now):
         if self.player.immune and now > getattr(self.player, "immune_timer", 0):
@@ -272,13 +420,14 @@ class Game:
                     continue
                 if self.player.shield_active:
                     self.player.shield_active = False
-                    self.explosion_manager.add(o.pos.copy())
+                    self._add_explosion(o.pos.copy())
                     if hasattr(o, "split"): self.obstacles.extend(o.split())
                     self.obstacles.remove(o)
                     continue
-                self.explosion_manager.add(self.player.pos.copy())
+                self._add_explosion(self.player.pos.copy())
                 self.camera.shake(0.5, 15)
                 self.state = "gameover"
+                self._play_sfx("gameover")
                 return
 
         # Particles vs obstacle
@@ -288,7 +437,7 @@ class Game:
                     self.score += o.score_value
                     self.flash_messages.append({"text": str(o.score_value), "timer": now + 1.5,
                                                 "pos": (int(o.pos[0]), int(o.pos[1])), "font_size": 25})
-                    if o.explode: self.explosion_manager.add(o.pos.copy())
+                    if o.explode: self._add_explosion(o.pos.copy())
                     if hasattr(o, "split"): self.obstacles.extend(o.split())
                     self.obstacles.remove(o)
                     if p in self.emitter.particles:
@@ -300,7 +449,7 @@ class Game:
             for pt in self.player.trail[::5]:
                 if np.linalg.norm(np.array(pt) - o.pos) < o.radius:
                     self.score += 25
-                    if o.explode: self.explosion_manager.add(o.pos.copy())
+                    if o.explode: self._add_explosion(o.pos.copy())
                     if hasattr(o, "split"): self.obstacles.extend(o.split())
                     self.obstacles.remove(o)
                     break
@@ -351,6 +500,7 @@ class Game:
                     self.player.special_pickup = pu
 
                 self.powerups.remove(pu)
+                self._play_sfx("pickup")
 
         # Magnet attraction
         if self.player.magnet_active:
@@ -391,7 +541,12 @@ class Game:
             surf.blit(txt, (WIDTH//2 - txt.get_width()//2, 30))
             for i, key in enumerate(self.settings_keys):
                 y = 100 + i * 60
-                val = font30.render(f"{key}: {settings_data[key]}", True, (255, 255, 255))
+                current = settings_data[key]
+                if key in self.settings_bounds:
+                    display_val = f"{current:.2f}"
+                else:
+                    display_val = current
+                val = font30.render(f"{key}: {display_val}", True, (255, 255, 255))
                 surf.blit(val, (WIDTH//2 - 150, y))
                 minus = pygame.Rect(WIDTH//2+50, y, 30, 30)
                 plus  = pygame.Rect(WIDTH//2+90, y, 30, 30)
