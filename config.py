@@ -1,6 +1,13 @@
 # config.py
 # All configurable constants and settings
 
+import os
+
+
+# Audio feature flags
+AUDIO_ENABLED = True
+AUDIO_LOG_ENABLED = bool(int(os.getenv("AUDIO_LOG_ENABLED", "0")))
+
 # Window dimensions (increased 25%: 800×600 → 1000×750)
 WIDTH = 1920
 HEIGHT = 1080
